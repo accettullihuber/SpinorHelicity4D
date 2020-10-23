@@ -7,6 +7,11 @@
 BeginPackage["SpinorBuildingBlocks`"]
 
 
+(*In order to allow the package to be reloaded we unprotect and clear all the symbol definitions*)
+Unprotect@@Names["SpinorBuildingBlocks`*"];
+ClearAll@@Names["SpinorBuildingBlocks`*"];
+
+
 (* ::Section:: *)
 (*Function description*)
 
@@ -15,11 +20,12 @@ BeginPackage["SpinorBuildingBlocks`"]
 (*Label declaration*)
 
 
-DeclareMom::usage="DeclareMom[p,q,...] adds p,q,... to the list of momenta known to the package. Declaring momenta is not necessary but allows for the use of certain properties (like linearity) of functions like Chain and mp."
+DeclareMom::usage="DeclareMom[p,q,...] adds p,q,... to the list of momenta known to the package. Declaring momenta is not necessary but allows for the use of certain properties (like linearity) of functions like Chain and mp. Numbers cannot be declared as momentum labels. To access the list of declared labels use DeclareMom[] without arguments."
 UndeclareMom::usage="UndeclareMom[p,q,...] removes p,q,... from the list of known momenta. UndeclareMom[] clears the list of declared momenta."
-MomList::usage="MomList is the list containing all the labels which have been declared to be momenta. Names for momenta can be declared through DeclareMom."
-DeclareMassless::usage="DeclareMassless[p,q,k,...] adds p,q,k,... to the list of massless momenta."
-MasslessMomenta::usage="MasslessMomenta is the list of momenta which have been declared to be massless through DeclareMassless."
+(*MomList::usage="MomList is the list containing all the labels which have been declared to be momenta. Names for momenta can be declared through DeclareMom."*)
+DeclareMassless::usage="DeclareMassless[p,q,k,...] adds p,q,k,... to the list of massless momenta. Also it automatically adds p,q,k,... to the list of momentum labels. To access the list of massless momenta use DeclareMassless[] without any arguments."
+(*MasslessMomenta::usage="MasslessMomenta is the list of momenta which have been declared to be massless through DeclareMassless."*)
+UndeclareMassless::usage="UndeclareMassless[p,q,...] removes p,q,... from the list of massless momenta. UndeclareMassless[] clears the list of massless momenta."
 
 
 (* ::Subsection:: *)
@@ -29,18 +35,34 @@ MasslessMomenta::usage="MasslessMomenta is the list of momenta which have been d
 obar::usage="obar[p] is used inside invariants such as the angle and square brackets when the momentum p has to be interpreted as a reference momentum and thus associated spinors will be of the type \[Mu](p). obar is linear with respect to members of MomList."
 $lam::usage="Protected label for the \[Lambda] spinors."
 $mu::usage="Protected label for the \[Mu] spinors."
+$angle::usage="Protected label for angle bracket in Chain."
+$square::usage="Protected label for square bracket in Chain."
+$up::usage="Protected label used for type specification in certain functions."
+$down::usage="Protected label used for type specification in certain functions."
+$Shortcuts::usage="$Shortcuts returns a list of all the available shortcuts for expression input."
 
 
 (* ::Subsection:: *)
 (*Building blocks*)
 
 
-SpinorUndot::usage="SpinorUndot[momlabel][type][upper][lower] represents the generic four-dimensional spinor with undotted indices. The type is either $lam for \[Lambda] spinors or $mu for \[Mu] spinors.
-The label upper is for the upper spinor index and lower for the lower index, one of them needs to be Null. Explicit usage of this function can be easily avoided through the shortcuts, the palette or a custom definition. For further details see the documentation."
-SpinorDot::usage="SpinorDot[momlabel][type][upper][lower] represents the generic four-dimensional spinor with dotted indices. The type is either $lam for \[Lambda] spinors or $mu for \[Mu] spinors.
-The label upper is for the upper spinor index and lower for the lower index, one of them needs to be Null. Explicit usage of this function can be easily avoided through the shortcuts, the palette or a custom definition. For further details see the documentation."
+SpinorUndot::usage="SpinorUndot[momlabel][type][upper][lower] represents the generic four-dimensional spinor with undotted indices. The type is either $lam for \[Lambda] spinors or $mu for \[Mu] spinors. The label upper is for the upper spinor index and lower for the lower index, one of them needs to be Null. Explicit usage of this function can be easily avoided through the shortcuts, the palette or a custom definition. For further details see the documentation."
+SpinorDot::usage="SpinorDot[momlabel][type][upper][lower] represents the generic four-dimensional spinor with dotted indices. The type is either $lam for \[Lambda] spinors or $mu for \[Mu] spinors. The label upper is for the upper spinor index and lower for the lower index, one of them needs to be Null. Explicit usage of this function can be easily avoided through the shortcuts, the palette or a custom definition. For further details see the documentation."
+SpinorDotPure::usage="SpinorDotPure[p][type] represents a dotted spinor stripped of its Lorentz indices. Type assumes values $lam or $mu. This object is used mainly in SpinorReplace to define replacement rules."
+SpinorUndotPure::usage="SpinorUndotPure[p][type] represents an undotted spinor stripped of its Lorentz indices. Type assumes values $lam or $mu. This object is used mainly in SpinorReplace to define replacement rules."
 SpinorAngleBracket::usage="SpinorAngleBracket[p,q] is the spinor invariant \[LeftAngleBracket]p q\[RightAngleBracket]. SPinorAngleBracket is linear with respect to momenta which are members of MomList."
 SpinorSquareBracket::usage="SpinorSquareBracket[p,q] is the spinor invariant [p q]. SpinorSquareBracket is linear with respect to momenta which are members of MomList."
+Chain::usage="Chain[type1,p1,{p2,...,p3},p4,type2] represents a chain of contracted spinors. The two labels type1,type2 take values $angle/$square specifying the type of chain. For example Chain[$angle,p1,{p2},p3,$square]=\[LeftAngleBracket]p1 {p2} p3]."
+LeviCivitaSH::usage="LeviCivitaSH[a,b][type] represents the SU(2) Levi-Civita tensor which contracts the spinor indices. type takes values $up or $down."
+mp::usage="mp[p,q] represents the scalar product of p and q. mp is linear with respect to declared momenta."
+
+
+(* ::Subsection:: *)
+(*Actions on building blocks*)
+
+
+SetInvariants::usage="SetMp[list] takes as input a list of replacements of the type mp[x,y]->... and allows to fix given scalar products to a desired value."
+ClearInvariants::usage="ClearMp[mp[p1,p2],...] clears the definitions of the scalar products given as arguments. If ClearMp is called without arguments all the scalar products are cleared."
 
 
 (* ::Section:: *)
@@ -61,40 +83,88 @@ frontend=If[TrueQ[$FrontEnd==Null],0,1];
 
 
 (* ::Subsection::Closed:: *)
-(*MomList, DeclareMom and UndeclareMom*)
+(*DeclareMom and UndeclareMom*)
 
 
-MomList={};
+(*MomList={};
 Protect[MomList];
 
 (*Define MomReps, a private list of replacements which sends labels p into "p"*)
 MomReps={};
-Protect[MomReps];
 
-DeclareMom[label__]:=(Unprotect[MomList,MomReps];MomList=Join[MomList,Flatten[{label}]]//DeleteDuplicates;MomReps=Table[i->ToString[i],{i,MomList}];Protect[MomList,MomReps];);
+DeclareMom[label__]:=(Unprotect[MomList];MomList=DeleteCases[Join[MomList,Flatten[{label}]]//DeleteDuplicates,_?NumberQ]//Sort;MomReps=Table[i->ToString[i],{i,MomList}];Protect[MomList];);
 
-UndeclareMom[label__]:=(Unprotect[MomList,MomReps];MomList=DeleteCases[MomList,x_/;MemberQ[Flatten[{label}],x]];MomReps=Table[i->ToString[i],{i,MomList}]; Protect[MomList,MomReps];);
-UndeclareMom[]:=(Unprotect[MomList,MomReps];MomList={};MomReps={}; Protect[MomList,MomReps];);
+UndeclareMom[label__]:=(Unprotect[MomList];MomList=DeleteCases[MomList,x_/;MemberQ[Flatten[{label}],x]];MomReps=Table[i->ToString[i],{i,MomList}]; Protect[MomList];);
+UndeclareMom[]:=(Unprotect[MomList];MomList={};MomReps={}; Protect[MomList];);
+(*Protect the function definitions*)
+Protect[DeclareMom,UndeclareMom];*)
+
+
+MomList={};
+
+(*Define MomReps, a private list of replacements which sends labels p into "p"*)
+MomReps={};
+
+DeclareMom[label__]:=(MomList=DeleteCases[Join[MomList,Flatten[{label}]]//DeleteDuplicates,_?NumberQ]//Sort;MomReps=Table[i->ToString[i],{i,MomList}];MomList);
+DeclareMom[]:=(MomList);
+
+UndeclareMom[label__]:=(MomList=DeleteCases[MomList,x_/;MemberQ[Flatten[{label}],x]];MomReps=Table[i->ToString[i],{i,MomList}];MomList);
+UndeclareMom[]:=(MomList={};MomReps={};MomList);
 (*Protect the function definitions*)
 Protect[DeclareMom,UndeclareMom];
 
 
-(* ::Subsection::Closed:: *)
-(*DeclareMassless and MasslessMomenta*)
+(* ::Subsection:: *)
+(*DeclareMassless and UndeclareMassless*)
 
 
-MasslessMomenta={};
+(*MasslessMomenta={};
 Protect[MasslessMomenta];
 
 DeclareMassless[moms__]:=Module[{x},
 x=Flatten[{moms}];
 Unprotect[Extramass,Extramasstilde,MasslessMomenta,mp];
 Do[Extramass[i]=0;Extramasstilde[i]=0;SetMp[mp[i,i]->0],{i,x}];
-MasslessMomenta={MasslessMomenta,x}//Flatten//DeleteDuplicates;
+MasslessMomenta={MasslessMomenta,x}//Flatten//DeleteDuplicates//Sort;
 Protect[Extramass,Extramasstilde,MasslessMomenta,mp];
 ];
 
-Protect[DeclareMassless];
+Protect[DeclareMassless];*)
+
+
+MasslessMomenta={};
+
+DeclareMassless[moms__]:=Module[{x},
+x=Flatten[{moms}];
+Unprotect[Extramass,Extramasstilde];
+MasslessMomenta={MasslessMomenta,x}//Flatten//DeleteDuplicates//Sort;
+Do[Extramass[i]=0;Extramasstilde[i]=0;SetInvariants[mp[i,i]->0],{i,x}];
+(*Declare also as momentum labels*)
+DeclareMom[x];
+Protect[Extramass,Extramasstilde];
+Return[MasslessMomenta];
+];
+
+DeclareMassless[]:=(MasslessMomenta);
+
+
+UndeclareMassless[moms___]:=Module[{x},
+x=Flatten[{moms}];
+Unprotect[Extramass,Extramasstilde];
+If[Length[x]===0,
+x=DeclareMassless[];
+];
+Do[
+If[MemberQ[MasslessMomenta,i],
+Extramass[i]=.;
+Extramasstilde[i]=.;
+ClearInvariants[mp[i]];
+];
+,{i,x}];
+Protect[Extramass,Extramasstilde];
+MasslessMomenta=DeleteCases[MasslessMomenta,y_/;MemberQ[x,y]];
+Return[MasslessMomenta];
+];
 
 
 (* ::Section:: *)
@@ -127,6 +197,41 @@ Protect[obar];
 
 (*Test if a function is an obar, private function not available to the user*)
 obarQ[x_]:=TrueQ[Head[x]==obar];
+
+
+(* ::Subsection::Closed:: *)
+(*$Shortcuts*)
+
+
+If[frontend==1,
+$Shortcuts={RawBoxes[RowBox[{SuperscriptBox["\[Lambda]","\[Alpha]"],"[p]"}]] -> "esc + lu + esc",
+			RawBoxes[RowBox[{SubscriptBox["\[Lambda]","\[Alpha]"],"[p]"}]] -> "esc + ld + esc",
+			RawBoxes[RowBox[{SuperscriptBox[OverscriptBox["\[Lambda]","~"],"\[Alpha]"],"[p]"}]] -> "esc + ltu + esc",
+			RawBoxes[RowBox[{SubscriptBox[OverscriptBox["\[Lambda]","~"],"\[Alpha]"],"[p]"}]] -> "esc + ltd + esc",
+			RawBoxes[RowBox[{SuperscriptBox["\[Mu]","\[Alpha]"],"[p]"}]] -> "esc + muu + esc",
+			RawBoxes[RowBox[{SubscriptBox["\[Mu]","\[Alpha]"],"[p]"}]] -> "esc + mud + esc",
+			RawBoxes[RowBox[{SuperscriptBox[OverscriptBox["\[Mu]","~"],"\[Alpha]"],"[p]"}]] -> "esc + mtu + esc",
+			RawBoxes[RowBox[{SubscriptBox[OverscriptBox["\[Mu]","~"],"\[Alpha]"],"[p]"}]] -> "esc + mtd + esc",
+			RawBoxes[RowBox[{"\[Lambda][p]"}]]-> "esc + lp + esc",
+			RawBoxes[RowBox[{"\[Mu][p]"}]]-> "esc + mp + esc",
+			RawBoxes[RowBox[{OverscriptBox["\[Lambda]","~"],"[p]"}]]-> "esc + ltp + esc",
+			RawBoxes[RowBox[{OverscriptBox["\[Mu]","~"],"[p]"}]]-> "esc + mtp + esc",
+			RawBoxes[SuperscriptBox["\[Epsilon]",RowBox[{"a","b"}]]]->"esc + lcup + esc",
+			RawBoxes[SubscriptBox["\[Epsilon]",RowBox[{"a","b"}]]]->"esc + lcd + esc",
+			RawBoxes[RowBox[{"\[LeftAngleBracket]",RowBox[{"p  q"}],"\[RightAngleBracket]"}]] -> "esc + ab + esc",
+			RawBoxes[RowBox[{"[",RowBox[{"p  q"}],"]"}]]-> "esc + sb + esc",
+RawBoxes[RowBox[{"\[LeftAngleBracket]",RowBox[{"p q k"}],"]"}]]-> "esc + cas + esc",
+RawBoxes[RowBox[{"[",RowBox[{"p q k"}],"\[RightAngleBracket]"}]]-> "esc + csa + esc",RawBoxes[RowBox[{"\[LeftAngleBracket]",RowBox[{"p q k l"}],"\[RightAngleBracket]"}]]-> "esc + caa + esc",
+RawBoxes[RowBox[{"[",RowBox[{"p q k l"}],"]"}]]-> "esc + css + esc"}//MatrixForm;
+			];
+
+
+(* ::Subsection::Closed:: *)
+(*ClearDownValues*)
+
+
+(*Private function used to clear the downvalues of a given function*)
+ClearDownValues[f_]:=DownValues[f]=DeleteCases[DownValues[f],_?(FreeQ[First[#],Pattern]&)];
 
 
 (* ::Section:: *)
@@ -177,17 +282,39 @@ SpinorUndot /: Times[SpinorUndot[a_][$mu][d_][Null],SpinorUndot[b_][$mu][Null][d
 SpinorUndot /: Times[SpinorUndot[a_][$lam][d_][Null],SpinorUndot[b_][$mu][Null][d_]]:=SpinorAngleBracket[a,OverBar[b]];
 SpinorUndot /: Times[SpinorUndot[a_][$mu][d_][Null],SpinorUndot[b_][$lam][Null][d_]]:=SpinorAngleBracket[OverBar[a],b];
 SpinorUndot /: Times[SpinorUndot[a_][$lam][d_][Null],SpinorUndot[b_][$lam][Null][d_]]:=SpinorAngleBracket[a,b];
-SpinorUndot /: Times[levicivita2Down[a_,b_],SpinorUndot[mom_][type_][b_][Null]]:=SpinorUndot[mom][type][Null][a];
-SpinorUndot /: Times[levicivita2Down[a_,b_],SpinorUndot[mom_][type_][a_][Null]]:=-SpinorUndot[mom][type][Null][b];
-SpinorUndot /: Times[levicivita2Up[a_,b_],SpinorUndot[mom_][type_][Null][b_]]:=SpinorUndot[mom][type][a][Null];
-SpinorUndot /: Times[levicivita2Up[a_,b_],SpinorUndot[mom_][type_][Null][a_]]:=-SpinorUndot[mom][type][b][Null];
+SpinorUndot /: Times[LeviCivitaSH[a_,b_][$down],SpinorUndot[mom_][type_][b_][Null]]:=SpinorUndot[mom][type][Null][a];
+SpinorUndot /: Times[LeviCivitaSH[a_,b_][$down],SpinorUndot[mom_][type_][a_][Null]]:=-SpinorUndot[mom][type][Null][b];
+SpinorUndot /: Times[LeviCivitaSH[a_,b_][$up],SpinorUndot[mom_][type_][Null][b_]]:=SpinorUndot[mom][type][a][Null];
+SpinorUndot /: Times[LeviCivitaSH[a_,b_][$up],SpinorUndot[mom_][type_][Null][a_]]:=-SpinorUndot[mom][type][b][Null];
 
 
 (*Define the properties with respect to declared momenta*)
-SpinorUndot[x_+a_.*momlabel_String][type_][upper_][lower_]:=SpinorUndot[x][type][upper][lower]+SpinorUndot[a*momlabel][type][upper][lower];
-SpinorUndot[Times[-1,a1___,momlabel_String,a2___]][type_][upper_][lower_]:=I*SpinorUndot[a1*momlabel*a2][type][upper][lower];
-SpinorUndot[a_*momlabel_String][type_][upper_][lower_]:=a*SpinorUndot[momlabel][type][upper][lower];
 SpinorUndot[momlabel_][type_][upper_][lower_]/;AnyTrue[MomList,!FreeQ[momlabel,#]&]:=SpinorUndot[momlabel/.MomReps][type][upper][lower];
+SpinorUndot[x_+a_.*momlabel_String][type_][upper_][lower_]:=SpinorUndot[x][type][upper][lower]+SpinorUndot[a*momlabel][type][upper][lower];
+SpinorUndot[Times[int_?Negative,a1___,momlabel_String,a2___]][type_][upper_][lower_]:=I*(-int)SpinorUndot[a1*momlabel*a2][type][upper][lower];
+SpinorUndot[a_*momlabel_String][type_][upper_][lower_]:=a*SpinorUndot[momlabel][type][upper][lower];
+
+
+(* ::Subsection::Closed:: *)
+(*SpinorUndotPure*)
+
+
+SpinorUndotPureLBox[label_]:=TemplateBox[{label},"SpinorUndotPureL",
+DisplayFunction->(RowBox[{"\[Lambda]","[",#,"]"}]&),
+InterpretationFunction->(RowBox[{"SpinorUndotPure","[",#,"]","[","$lam","]"}]&)
+];
+SpinorUndotPureMBox[label_]:=TemplateBox[{label},"SpinorUndotPureM",
+DisplayFunction->(RowBox[{"\[Mu]","[",#,"]"}]&),
+InterpretationFunction->(RowBox[{"SpinorUndotPure","[",#,"]","[","$mu","]"}]&)
+];
+
+SpinorUndotPure /: MakeBoxes[SpinorUndotPure[label_][$lam],TraditionalForm|StandardForm]:=SpinorUndotPureLBox[ToBoxes[label]];
+SpinorUndotPure /: MakeBoxes[SpinorUndotPure[label_][$mu],TraditionalForm|StandardForm]:=SpinorUndotPureMBox[ToBoxes[label]];
+
+If[frontend==1,
+SetOptions[EvaluationNotebook[],InputAliases -> DeleteDuplicates@Append[InputAliases /. Options[EvaluationNotebook[], InputAliases], "lp" -> SpinorUndotPureLBox["\[SelectionPlaceholder]"]]];
+SetOptions[EvaluationNotebook[],InputAliases -> DeleteDuplicates@Append[InputAliases /. Options[EvaluationNotebook[], InputAliases], "mp" -> SpinorUndotPureMBox["\[SelectionPlaceholder]"]]];
+];
 
 
 (* ::Subsection::Closed:: *)
@@ -232,20 +359,42 @@ SpinorDot /: Times[SpinorDot[a_][$mu][d_][Null],SpinorDot[b_][$mu][Null][d_]]:=S
 SpinorDot /: Times[SpinorDot[a_][$lam][d_][Null],SpinorDot[b_][$mu][Null][d_]]:=SpinorSquareBracket[OverBar[b],a];
 SpinorDot /: Times[SpinorDot[a_][$mu][d_][Null],SpinorDot[b_][$lam][Null][d_]]:=SpinorSquareBracket[b,OverBar[a]];
 SpinorDot /: Times[SpinorDot[a_][$lam][d_][Null],SpinorDot[b_][$lam][Null][d_]]:=SpinorSquareBracket[b,a];
-SpinorDot /: Times[levicivita2Down[a_,b_],SpinorDot[mom_][type_][b_][Null]]:=SpinorDot[mom][type][Null][a];
-SpinorDot /: Times[levicivita2Down[a_,b_],SpinorDot[mom_][type_][a_][Null]]:=-SpinorDot[mom][type][Null][b];
-SpinorDot /: Times[levicivita2Up[a_,b_],SpinorDot[mom_][type_][Null][b_]]:=SpinorDot[mom][type][a][Null];
-SpinorDot /: Times[levicivita2Up[a_,b_],SpinorDot[mom_][type_][Null][a_]]:=-SpinorDot[mom][type][b][Null];
+SpinorDot /: Times[LeviCivitaSH[a_,b_][$down],SpinorDot[mom_][type_][b_][Null]]:=SpinorDot[mom][type][Null][a];
+SpinorDot /: Times[LeviCivitaSH[a_,b_][$down],SpinorDot[mom_][type_][a_][Null]]:=-SpinorDot[mom][type][Null][b];
+SpinorDot /: Times[LeviCivitaSH[a_,b_][$up],SpinorDot[mom_][type_][Null][b_]]:=SpinorDot[mom][type][a][Null];
+SpinorDot /: Times[LeviCivitaSH[a_,b_][$up],SpinorDot[mom_][type_][Null][a_]]:=-SpinorDot[mom][type][b][Null];
 
 
 (*Define the properties with respect to declared momenta*)
-SpinorDot[x_+a_.*momlabel_String][type_][upper_][lower_]:=SpinorDot[x][type][upper][lower]+SpinorDot[a*momlabel][type][upper][lower];
-SpinorDot[Times[-1,a1___,momlabel_String,a2___]][type_][upper_][lower_]:=I*SpinorDot[a1*momlabel*a2][type][upper][lower];
-SpinorDot[a_*momlabel_String][type_][upper_][lower_]:=a*SpinorDot[momlabel][type][upper][lower];
 SpinorDot[momlabel_][type_][upper_][lower_]/;AnyTrue[MomList,!FreeQ[momlabel,#]&]:=SpinorDot[momlabel/.MomReps][type][upper][lower];
+SpinorDot[x_+a_.*momlabel_String][type_][upper_][lower_]:=SpinorDot[x][type][upper][lower]+SpinorDot[a*momlabel][type][upper][lower];
+SpinorDot[Times[int_?Negative,a1___,momlabel_String,a2___]][type_][upper_][lower_]:=I*(-int)*SpinorDot[a1*momlabel*a2][type][upper][lower];
+SpinorDot[a_*momlabel_String][type_][upper_][lower_]:=a*SpinorDot[momlabel][type][upper][lower];
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
+(*SpinorDotPure*)
+
+
+SpinorDotPureLBox[label_]:=TemplateBox[{label},"SpinorDotPureL",
+DisplayFunction->(RowBox[{OverscriptBox["\[Lambda]","~"],"[",#,"]"}]&),
+InterpretationFunction->(RowBox[{"SpinorDotPure","[",#,"]","[","$lam","]"}]&)
+];
+SpinorDotPureMBox[label_]:=TemplateBox[{label},"SpinorDotPureM",
+DisplayFunction->(RowBox[{OverscriptBox["\[Mu]","~"],"[",#,"]"}]&),
+InterpretationFunction->(RowBox[{"SpinorDotPure","[",#,"]","[","$mu","]"}]&)
+];
+
+SpinorDotPure /: MakeBoxes[SpinorDotPure[label_][$lam],TraditionalForm|StandardForm]:=SpinorDotPureLBox[ToBoxes[label]];
+SpinorDotPure /: MakeBoxes[SpinorDotPure[label_][$mu],TraditionalForm|StandardForm]:=SpinorDotPureMBox[ToBoxes[label]];
+
+If[frontend==1,
+SetOptions[EvaluationNotebook[],InputAliases -> DeleteDuplicates@Append[InputAliases /. Options[EvaluationNotebook[], InputAliases], "ltp" -> SpinorDotPureLBox["\[SelectionPlaceholder]"]]];
+SetOptions[EvaluationNotebook[],InputAliases -> DeleteDuplicates@Append[InputAliases /. Options[EvaluationNotebook[], InputAliases], "mtp" -> SpinorDotPureMBox["\[SelectionPlaceholder]"]]];
+];
+
+
+(* ::Subsection::Closed:: *)
 (*SpinorAngleBracket*)
 
 
@@ -265,19 +414,19 @@ SpinorAngleBracket /: MakeBoxes[SpinorAngleBracket[a_, b_], StandardForm | Tradi
 SpinorAngleBracket[x_,y_]/;AnyTrue[MomList,!FreeQ[x|y,#]&]:=SpinorAngleBracket[x/.MomReps,y/.MomReps];
 
 SpinorAngleBracket[x_+a_.*momlabel_String,y_]:=SpinorAngleBracket[x,y]+SpinorAngleBracket[a*momlabel,y];
-SpinorAngleBracket[Times[-1,a1___,momlabel_String,a2___],y_]:=I*SpinorAngleBracket[a1*momlabel*a2,y];
+SpinorAngleBracket[Times[int_?Negative,a1___,momlabel_String,a2___],y_]:=I*(-int)*SpinorAngleBracket[a1*momlabel*a2,y];
 SpinorAngleBracket[a_*momlabel_String,y_]:=a*SpinorAngleBracket[momlabel,y];
 
 SpinorAngleBracket[y_,x_+a_.*momlabel_String]:=SpinorAngleBracket[y,x]+SpinorAngleBracket[y,a*momlabel];
-SpinorAngleBracket[y_,Times[-1,a1___,momlabel_String,a2___]]:=I*SpinorAngleBracket[y,a1*momlabel*a2];
+SpinorAngleBracket[y_,Times[int_?Negative,a1___,momlabel_String,a2___]]:=I*(-int)*SpinorAngleBracket[y,a1*momlabel*a2];
 SpinorAngleBracket[y_,a_*momlabel_String]:=a*SpinorAngleBracket[y,momlabel];
 
 SpinorAngleBracket[x_+a_.*momlabel_?obarQ,y_]:=SpinorAngleBracket[x,y]+SpinorAngleBracket[a*momlabel,y];
-SpinorAngleBracket[Times[-1,a1___,momlabel_?obarQ,a2___],y_]:=I*SpinorAngleBracket[a1*momlabel*a2,y];
+SpinorAngleBracket[Times[int_?Negative,a1___,momlabel_?obarQ,a2___],y_]:=I*(-int)*SpinorAngleBracket[a1*momlabel*a2,y];
 SpinorAngleBracket[a_*momlabel_?obarQ,y_]:=a*SpinorAngleBracket[momlabel,y];
 
 SpinorAngleBracket[y_,x_+a_.*momlabel_?obarQ]:=SpinorAngleBracket[y,x]+SpinorAngleBracket[y,a*momlabel];
-SpinorAngleBracket[y_,Times[-1,a1___,momlabel_?obarQ,a2___]]:=I*SpinorAngleBracket[y,a1*momlabel*a2];
+SpinorAngleBracket[y_,Times[int_?Negative,a1___,momlabel_?obarQ,a2___]]:=I*(-int)*SpinorAngleBracket[y,a1*momlabel*a2];
 SpinorAngleBracket[y_,a_*momlabel_?obarQ]:=a*SpinorAngleBracket[y,momlabel];
 
 (*Shortcut definition*)
@@ -287,7 +436,7 @@ SetOptions[EvaluationNotebook[],
     ];
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*SpinorSquareBracket*)
 
 
@@ -305,19 +454,19 @@ SpinorSquareBracket /: MakeBoxes[SpinorSquareBracket[a_, b_], StandardForm | Tra
 SpinorSquareBracket[x_,y_]/;AnyTrue[MomList,!FreeQ[x|y,#]&]:=SpinorSquareBracket[x/.MomReps,y/.MomReps];
 
 SpinorSquareBracket[x_+a_.*momlabel_String,y_]:=SpinorSquareBracket[x,y]+SpinorSquareBracket[a*momlabel,y];
-SpinorSquareBracket[Times[-1,a1___,momlabel_String,a2___],y_]:=I*SpinorSquareBracket[a1*momlabel*a2,y];
+SpinorSquareBracket[Times[int_?Negative,a1___,momlabel_String,a2___],y_]:=I*(-int)*SpinorSquareBracket[a1*momlabel*a2,y];
 SpinorSquareBracket[a_*momlabel_String,y_]:=a*SpinorSquareBracket[momlabel,y];
 
 SpinorSquareBracket[y_,x_+a_.*momlabel_String]:=SpinorSquareBracket[y,x]+SpinorSquareBracket[y,a*momlabel];
-SpinorSquareBracket[y_,Times[-1,a1___,momlabel_String,a2___]]:=I*SpinorSquareBracket[y,a1*momlabel*a2];
+SpinorSquareBracket[y_,Times[int_?Negative,a1___,momlabel_String,a2___]]:=I*(-int)*SpinorSquareBracket[y,a1*momlabel*a2];
 SpinorSquareBracket[y_,a_*momlabel_String]:=a*SpinorSquareBracket[y,momlabel];
 
 SpinorSquareBracket[x_+a_.*momlabel_?obarQ,y_]:=SpinorSquareBracket[x,y]+SpinorSquareBracket[a*momlabel,y];
-SpinorSquareBracket[Times[-1,a1___,momlabel_?obarQ,a2___],y_]:=I*SpinorSquareBracket[a1*momlabel*a2,y];
+SpinorSquareBracket[Times[int_?Negative,a1___,momlabel_?obarQ,a2___],y_]:=I*(-int)*SpinorSquareBracket[a1*momlabel*a2,y];
 SpinorSquareBracket[a_*momlabel_?obarQ,y_]:=a*SpinorSquareBracket[momlabel,y];
 
 SpinorSquareBracket[y_,x_+a_.*momlabel_?obarQ]:=SpinorSquareBracket[y,x]+SpinorSquareBracket[y,a*momlabel];
-SpinorSquareBracket[y_,Times[-1,a1___,momlabel_?obarQ,a2___]]:=I*SpinorSquareBracket[y,a1*momlabel*a2];
+SpinorSquareBracket[y_,Times[int_?Negative,a1___,momlabel_?obarQ,a2___]]:=I*(-int)*SpinorSquareBracket[y,a1*momlabel*a2];
 SpinorSquareBracket[y_,a_*momlabel_?obarQ]:=a*SpinorSquareBracket[y,momlabel];
 
 If[frontend==1,
@@ -326,12 +475,198 @@ SetOptions[EvaluationNotebook[],
     ];
 
 
+(* ::Subsection::Closed:: *)
+(*Chain*)
+
+
+(*Display of the chains*)
+AngleSquareChainBox[beginning_,args_,end_]:=TemplateBox[{beginning,args,end},"AngleSquareChain",
+DisplayFunction->(RowBox[{"\[LeftAngleBracket]",#1,#2,#3,"]"}]&),
+InterpretationFunction->(RowBox[{"Chain","[","$angle",",",#1,",",#2,",",#3,",","$square","]"}]&)
+];
+SquareAngleChainBox[beginning_,args_,end_]:=TemplateBox[{beginning,args,end},"SquareAngleChain",
+DisplayFunction->(RowBox[{"[",#1,#2,#3,"\[RightAngleBracket]"}]&),
+InterpretationFunction->(RowBox[{"Chain","[","$square",",",#1,",",#2,",",#3,",","$angle","]"}]&)
+];
+AngleAngleChainBox[beginning_,args_,end_]:=TemplateBox[{beginning,args,end},"AngleAngleChain",
+DisplayFunction->(RowBox[{"\[LeftAngleBracket]",#1,#2,#3,"\[RightAngleBracket]"}]&),
+InterpretationFunction->(RowBox[{"Chain","[","$angle",",",#1,",",#2,",",#3,",","$angle","]"}]&)
+];
+SquareSquareChainBox[beginning_,args_,end_]:=TemplateBox[{beginning,args,end},"SquareSquareChain",
+DisplayFunction->(RowBox[{"[",#1,#2,#3,"]"}]&),
+InterpretationFunction->(RowBox[{"Chain","[","$square",",",#1,",",#2,",",#3,",","$square","]"}]&)
+];
+Chain /: MakeBoxes[Chain[$angle,x_,y_List,z_,$square],StandardForm|TraditionalForm] /;OddQ[Length[y]+2]:=AngleSquareChainBox[ToBoxes[x],ToBoxes[y],ToBoxes[z]];
+Chain /: MakeBoxes[Chain[$angle,x_,y_List,z_,$angle],StandardForm|TraditionalForm] /;EvenQ[Length[y]+2]:=AngleAngleChainBox[ToBoxes[x],ToBoxes[y],ToBoxes[z]];
+Chain /: MakeBoxes[Chain[$square,x_,y_List,z_,$angle],StandardForm|TraditionalForm] /;OddQ[Length[y]+2]:=SquareAngleChainBox[ToBoxes[x],ToBoxes[y],ToBoxes[z]];
+Chain /: MakeBoxes[Chain[$square,x_,y_List,z_,$square],StandardForm|TraditionalForm] /;EvenQ[Length[y]+2]:=SquareSquareChainBox[ToBoxes[x],ToBoxes[y],ToBoxes[z]];
+
+(*Shortcuts*)
+
+If[frontend==1,
+SetOptions[EvaluationNotebook[],
+    InputAliases -> DeleteDuplicates @ Append[InputAliases /. Options[EvaluationNotebook[], InputAliases], "cas" -> AngleSquareChainBox[ToBoxes[\[SelectionPlaceholder]],ToBoxes[{\[SelectionPlaceholder]}],ToBoxes[\[SelectionPlaceholder]]]]];
+SetOptions[EvaluationNotebook[],
+    InputAliases -> DeleteDuplicates @ Append[InputAliases /. Options[EvaluationNotebook[], InputAliases], "csa" -> SquareAngleChainBox[ToBoxes[\[SelectionPlaceholder]],ToBoxes[{\[SelectionPlaceholder]}],ToBoxes[\[SelectionPlaceholder]]]]];
+SetOptions[EvaluationNotebook[],
+    InputAliases -> DeleteDuplicates @ Append[InputAliases /. Options[EvaluationNotebook[], InputAliases], "caa" -> AngleAngleChainBox[ToBoxes[\[SelectionPlaceholder]],ToBoxes[{\[SelectionPlaceholder]}],ToBoxes[\[SelectionPlaceholder]]]]];
+SetOptions[EvaluationNotebook[],
+    InputAliases -> DeleteDuplicates @ Append[InputAliases /. Options[EvaluationNotebook[], InputAliases], "css" -> SquareSquareChainBox[ToBoxes[\[SelectionPlaceholder]],ToBoxes[{\[SelectionPlaceholder]}],ToBoxes[\[SelectionPlaceholder]]]]];
+ ];
+
+(*Linearity properties with respect to declared momenta*)
+
+Chain[momlabel__]/;AnyTrue[MomList,!FreeQ[{momlabel},#]&]:=Chain[Sequence@@({momlabel}/.MomReps)];
+Chain[type1_,p1_+a_.*momlabel_String,{p2__},p3_,type2_]:=Chain[type1,p1,{p2},p3,type2]+Chain[type1,a*momlabel,{p2},p3,type2];
+Chain[type1_,Times[int_?Negative,a1___,momlabel_String,a2___],{p2__},p3_,type2_]:=I*(-int)*Chain[type1,a1*momlabel*a2,{p2},p3,type2];
+Chain[type1_,a_*momlabel_String,{p2__},p3_,type2_]:=a*Chain[type1,momlabel,{p2},p3,type2];
+Chain[type1_,p1_,{p2__},p3_+a_.*momlabel_String,type2_]:=Chain[type1,p1,{p2},p3,type2]+Chain[type1,p1,{p2},a*momlabel,type2];
+Chain[type1_,p1_,{p2__},Times[int_?Negative,a1___,momlabel_String,a2___],type2_]:=I*(-int)*Chain[type1,p1,{p2},a1*momlabel*a2,type2];
+Chain[type1_,p1_,{p2__},a_*momlabel_String,type2_]:=a*Chain[type1,p1,{p2},momlabel,type2];
+Chain[type1_,p1_,{x___,p2_+a_. momlabel_String,y___},p3_,type2_]:=Chain[type1,p1,{x,p2,y},p3,type2]+a*Chain[type1,p1,{x,momlabel,y},p3,type2];
+Chain[type1_,p1_,{x___,a_*momlabel_String,y___},p3_,type2_]:=a*Chain[type1,p1,{x,momlabel,y},p3,type2];
+
+
+(* ::Subsection::Closed:: *)
+(*LeviCivitaSH*)
+
+
+(*Tensor with upper indices*)
+LevicivitaSHBoxUp[a_,b_]:=TemplateBox[{a,b},"LevicivitaSHUp",
+DisplayFunction->(SuperscriptBox["\[Epsilon]",RowBox[{#1,#2}]]&),
+InterpretationFunction->(RowBox[{"LeviCivitaSH","[",#1,",",#2,"]","[","$up","]"}]&)
+];
+
+LeviCivitaSH /: MakeBoxes[LeviCivitaSH[a_,b_][$up],TraditionalForm|StandardForm]:=LevicivitaSHBoxUp[ToBoxes[a],ToBoxes[b]];
+
+(*Tensor with lower indices*)
+LevicivitaSHBoxDown[a_,b_]:=TemplateBox[{a,b},"LevicivitaSHDown",
+DisplayFunction->(SubscriptBox["\[Epsilon]",RowBox[{#1,#2}]]&),
+InterpretationFunction->(RowBox[{"LeviCivitaSH","[",#1,",",#2,"]","[","$down","]"}]&)
+];
+
+LeviCivitaSH /: MakeBoxes[LeviCivitaSH[a_,b_][$down],TraditionalForm|StandardForm]:=LevicivitaSHBoxDown[ToBoxes[a],ToBoxes[b]];
+
+(*Properties*)
+LeviCivitaSH[a_, b_][_] /; (a == b) := 0;
+LeviCivitaSH[a_, b_] [type_]/; OrderedQ[{b,a}] := -LeviCivitaSH[b, a][type];
+LeviCivitaSH[a_Integer,b_Integer][_]:=LeviCivitaTensor[2][[a,b]];
+
+(*Shortcut definition*)
+If[frontend==1,
+SetOptions[EvaluationNotebook[],
+    InputAliases -> DeleteDuplicates@Append[InputAliases /. Options[EvaluationNotebook[], InputAliases], "lcup" -> LevicivitaSHBoxUp[ToBoxes[\[SelectionPlaceholder]],ToBoxes[\[SelectionPlaceholder]]]]];
+SetOptions[EvaluationNotebook[],
+    InputAliases -> DeleteDuplicates@Append[InputAliases /. Options[EvaluationNotebook[], InputAliases], "lcd" -> LevicivitaSHBoxDown[ToBoxes[\[SelectionPlaceholder]],ToBoxes[\[SelectionPlaceholder]]]]];
+
+    ];
+
+
+(* ::Subsection::Closed:: *)
+(*Scalar product*)
+
+
+(*Display*)
+mpBox[x_,y_]:=TemplateBox[{x,y},"ScalarProduct",
+DisplayFunction->(RowBox[{"(",#1,"\[CenterDot]",#2,")"}]&),
+InterpretationFunction->(RowBox[{"mp","[",#1,",",#2,"]"}]&)];
+
+(*Different display when the two momenta are equal*)
+
+mpBox[x_,x_]:=TemplateBox[{x},"ScalarProduct2",
+DisplayFunction->(SuperscriptBox[RowBox[{"(",#1,")"}],"2"]&),
+InterpretationFunction->(RowBox[{"mp","[",#1,",",#1,"]"}]&)];
+
+mp /: MakeBoxes[mp[x_,y_],StandardForm|TraditionalForm]:=mpBox[ToBoxes[x],ToBoxes[y]];
+
+(*In order to make it more user friendly we define the function in such a way that it automatically adds the MomPure to its argument if it is not already in that format.*)
+mp[x_]:=mp[x,x];
+
+(*Linearity in declared momenta*)
+SetAttributes[mp,Orderless];
+mp[momlabel_,y_]/;AnyTrue[MomList,!FreeQ[momlabel,#]&]:=mp[momlabel/.MomReps,y];
+mp[x_+a_. momlabel_String,y_]:=mp[x,y]+a*mp[momlabel,y];
+mp[a_*momlabel_String,y_]:=a*mp[momlabel,y];
+
+
+(* ::Section:: *)
+(*Actions on building blocks*)
+
+
+(* ::Subsection::Closed:: *)
+(*SetInvariants*)
+
+
+FixedInvariants={};
+
+SetAttributes[SetInvariants,HoldAll];
+
+
+SetInvariants[x__]:=Module[{loclist,new},
+(*First inactivate mp in order to avoid undesired evaluations of already defined scalar products*)
+loclist=Flatten[Inactivate[Inactivate[{x},mp],S]];
+(*Delete the instances where mp does not appear, for any reason*)
+loclist=DeleteCases[loclist,y_/;FreeQ[y,mp]&&FreeQ[y,S]];
+(*Bring mp[i] into suitable form*)
+loclist=loclist/.{Inactive[mp][a_]:>Inactive[mp][a,a]};
+(*Given an mp[x,y] with x,y massless, set also the S[x,y] to 2*mp[x,y]*)
+(*Rules to list for easier manipulation*)
+loclist=loclist/.{Rule->List,RuleDelayed->List,Equal->List};
+(*If first member of list is mp[x,y] massless add setting for S[x,y]*)
+loclist=Join[loclist,Cases[loclist,{z_,y_}/;MatchQ[z,Inactive[mp][a_,b_]/;MemberQ[MasslessMomenta,a]&&MemberQ[MasslessMomenta,b]]:>{(z/.mp->S),2*y}]];
+(*Do it the opposite way around also for S and delete duplicates*)
+loclist=DeleteDuplicates[Join[loclist,Cases[loclist,{z_,y_}/;MatchQ[z,Inactive[S][a_,b_]/;MemberQ[MasslessMomenta,a]&&MemberQ[MasslessMomenta,b]]:>{(z/.S->mp),1/2*y}]]];
+loclist=(RuleDelayed@@@loclist)/.{Inactive[mp]->"mp",Inactive[S]->"S"};
+
+(*Now actually set the values*)
+Unprotect[mp,S];
+FixedInvariants=DeleteDuplicatesBy[Join[loclist,FixedInvariants],First];
+ClearDownValues[mp];
+ClearDownValues[S];
+FixedInvariants/.{"mp"->mp,"S"->S}/.RuleDelayed->SetDelayed;
+Protect[mp,S];
+Return[FixedInvariants//Sort];
+];
+
+SetInvariants[]:=(FixedInvariants//Sort);
+
+
+(* ::Subsection:: *)
+(*ClearInvariants*)
+
+
+SetAttributes[ClearInvariants,HoldAll];
+
+ClearInvariants[x___]:=Module[{loc,loclist,new},
+loclist=Flatten[Inactivate[Inactivate[{x},mp],S]]/.{Inactive[mp]->"mp",Inactive[S]->"S"};
+loclist=loclist/.{"mp"[a_]:>"mp"[a,a]};
+(*Take into account that for massless particles S and mp are related*)
+loclist=Flatten[loclist/.{"mp"[a_,b_]/;MemberQ[MasslessMomenta,a]&&MemberQ[MasslessMomenta,b]:>{"mp"[a,b],"S"[a,b]},"S"[a_,b_]/;MemberQ[MasslessMomenta,a]&&MemberQ[MasslessMomenta,b]:>{"mp"[a,b],"S"[a,b]}}];
+Unprotect[mp,S];
+ClearDownValues[mp];
+ClearDownValues[S];
+If[Length[loclist]===0,
+(*No argument means clear all*)
+	FixedInvariants={},
+(*Remove from FixedInvariants the ones to be undeclared*)
+FixedInvariants=DeleteCases[FixedInvariants,z_/;MemberQ[loclist,z[[1]]]];
+(*Apply remaining definitions*)
+FixedInvariants/.{"mp"->mp,"S"->S}/.RuleDelayed->SetDelayed;
+];
+Protect[mp,S];
+Return[FixedInvariants//Sort];
+];
+
+
 (* ::Section:: *)
 (*End of context*)
 
 
 (*End the private context*)
 End[]
+
+(*Protect all public symbols in the package*)
+Protect@@Names["SpinorBuildingBlocks`*"];
 
 (*End the package*)
 EndPackage[]
