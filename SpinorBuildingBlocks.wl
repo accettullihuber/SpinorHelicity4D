@@ -48,13 +48,15 @@ $Shortcuts::usage="$Shortcuts returns a list of all the available shortcuts for 
 
 SpinorUndot::usage="SpinorUndot[momlabel][type][upper][lower] represents the generic four-dimensional spinor with undotted indices. The type is either $lam for \[Lambda] spinors or $mu for \[Mu] spinors. The label upper is for the upper spinor index and lower for the lower index, one of them needs to be Null. Explicit usage of this function can be easily avoided through the shortcuts, the palette or a custom definition. For further details see the documentation."
 SpinorDot::usage="SpinorDot[momlabel][type][upper][lower] represents the generic four-dimensional spinor with dotted indices. The type is either $lam for \[Lambda] spinors or $mu for \[Mu] spinors. The label upper is for the upper spinor index and lower for the lower index, one of them needs to be Null. Explicit usage of this function can be easily avoided through the shortcuts, the palette or a custom definition. For further details see the documentation."
-SpinorDotPure::usage="SpinorDotPure[p][type] represents a dotted spinor stripped of its Lorentz indices. Type assumes values $lam or $mu. This object is used mainly in SpinorReplace to define replacement rules."
-SpinorUndotPure::usage="SpinorUndotPure[p][type] represents an undotted spinor stripped of its Lorentz indices. Type assumes values $lam or $mu. This object is used mainly in SpinorReplace to define replacement rules."
+SpinorDotBare::usage="SpinorDotBare[p][type] represents a dotted spinor stripped of its Lorentz indices. Type assumes values $lam or $mu. This object is used mainly in SpinorReplace to define replacement rules."
+SpinorUndotBare::usage="SpinorUndotBare[p][type] represents an undotted spinor stripped of its Lorentz indices. Type assumes values $lam or $mu. This object is used mainly in SpinorReplace to define replacement rules."
 SpinorAngleBracket::usage="SpinorAngleBracket[p,q] is the spinor invariant \[LeftAngleBracket]p q\[RightAngleBracket]. SPinorAngleBracket is linear with respect to momenta which are members of MomList."
 SpinorSquareBracket::usage="SpinorSquareBracket[p,q] is the spinor invariant [p q]. SpinorSquareBracket is linear with respect to momenta which are members of MomList."
 Chain::usage="Chain[type1,p1,{p2,...,p3},p4,type2] represents a chain of contracted spinors. The two labels type1,type2 take values $angle/$square specifying the type of chain. For example Chain[$angle,p1,{p2},p3,$square]=\[LeftAngleBracket]p1 {p2} p3]."
 LeviCivitaSH::usage="LeviCivitaSH[a,b][type] represents the SU(2) Levi-Civita tensor which contracts the spinor indices. type takes values $up or $down."
 mp::usage="mp[p,q] represents the scalar product of p and q. mp is linear with respect to declared momenta."
+S::usage="S[p,...,q] is the Mandelstam invariant (p+...+q\!\(\*SuperscriptBox[\()\), \(2\)]\). S has attribute Orderless."
+NewProcess::usage="NewProcess[] clears all the invariants, the list of defined massless momenta as well as the declared momenta."
 
 
 (* ::Subsection:: *)
@@ -114,7 +116,7 @@ UndeclareMom[]:=(MomList={};MomReps={};MomList);
 Protect[DeclareMom,UndeclareMom];
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*DeclareMassless and UndeclareMassless*)
 
 
@@ -296,24 +298,24 @@ SpinorUndot[a_*momlabel_String][type_][upper_][lower_]:=a*SpinorUndot[momlabel][
 
 
 (* ::Subsection::Closed:: *)
-(*SpinorUndotPure*)
+(*SpinorUndotBare*)
 
 
-SpinorUndotPureLBox[label_]:=TemplateBox[{label},"SpinorUndotPureL",
+SpinorUndotBareLBox[label_]:=TemplateBox[{label},"SpinorUndotBareL",
 DisplayFunction->(RowBox[{"\[Lambda]","[",#,"]"}]&),
-InterpretationFunction->(RowBox[{"SpinorUndotPure","[",#,"]","[","$lam","]"}]&)
+InterpretationFunction->(RowBox[{"SpinorUndotBare","[",#,"]","[","$lam","]"}]&)
 ];
-SpinorUndotPureMBox[label_]:=TemplateBox[{label},"SpinorUndotPureM",
+SpinorUndotBareMBox[label_]:=TemplateBox[{label},"SpinorUndotBareM",
 DisplayFunction->(RowBox[{"\[Mu]","[",#,"]"}]&),
-InterpretationFunction->(RowBox[{"SpinorUndotPure","[",#,"]","[","$mu","]"}]&)
+InterpretationFunction->(RowBox[{"SpinorUndotBare","[",#,"]","[","$mu","]"}]&)
 ];
 
-SpinorUndotPure /: MakeBoxes[SpinorUndotPure[label_][$lam],TraditionalForm|StandardForm]:=SpinorUndotPureLBox[ToBoxes[label]];
-SpinorUndotPure /: MakeBoxes[SpinorUndotPure[label_][$mu],TraditionalForm|StandardForm]:=SpinorUndotPureMBox[ToBoxes[label]];
+SpinorUndotBare /: MakeBoxes[SpinorUndotBare[label_][$lam],TraditionalForm|StandardForm]:=SpinorUndotBareLBox[ToBoxes[label]];
+SpinorUndotBare /: MakeBoxes[SpinorUndotBare[label_][$mu],TraditionalForm|StandardForm]:=SpinorUndotBareMBox[ToBoxes[label]];
 
 If[frontend==1,
-SetOptions[EvaluationNotebook[],InputAliases -> DeleteDuplicates@Append[InputAliases /. Options[EvaluationNotebook[], InputAliases], "lp" -> SpinorUndotPureLBox["\[SelectionPlaceholder]"]]];
-SetOptions[EvaluationNotebook[],InputAliases -> DeleteDuplicates@Append[InputAliases /. Options[EvaluationNotebook[], InputAliases], "mp" -> SpinorUndotPureMBox["\[SelectionPlaceholder]"]]];
+SetOptions[EvaluationNotebook[],InputAliases -> DeleteDuplicates@Append[InputAliases /. Options[EvaluationNotebook[], InputAliases], "lp" -> SpinorUndotBareLBox["\[SelectionPlaceholder]"]]];
+SetOptions[EvaluationNotebook[],InputAliases -> DeleteDuplicates@Append[InputAliases /. Options[EvaluationNotebook[], InputAliases], "mp" -> SpinorUndotBareMBox["\[SelectionPlaceholder]"]]];
 ];
 
 
@@ -373,24 +375,24 @@ SpinorDot[a_*momlabel_String][type_][upper_][lower_]:=a*SpinorDot[momlabel][type
 
 
 (* ::Subsection::Closed:: *)
-(*SpinorDotPure*)
+(*SpinorDotBare*)
 
 
-SpinorDotPureLBox[label_]:=TemplateBox[{label},"SpinorDotPureL",
+SpinorDotBareLBox[label_]:=TemplateBox[{label},"SpinorDotBareL",
 DisplayFunction->(RowBox[{OverscriptBox["\[Lambda]","~"],"[",#,"]"}]&),
-InterpretationFunction->(RowBox[{"SpinorDotPure","[",#,"]","[","$lam","]"}]&)
+InterpretationFunction->(RowBox[{"SpinorDotBare","[",#,"]","[","$lam","]"}]&)
 ];
-SpinorDotPureMBox[label_]:=TemplateBox[{label},"SpinorDotPureM",
+SpinorDotBareMBox[label_]:=TemplateBox[{label},"SpinorDotBareM",
 DisplayFunction->(RowBox[{OverscriptBox["\[Mu]","~"],"[",#,"]"}]&),
-InterpretationFunction->(RowBox[{"SpinorDotPure","[",#,"]","[","$mu","]"}]&)
+InterpretationFunction->(RowBox[{"SpinorDotBare","[",#,"]","[","$mu","]"}]&)
 ];
 
-SpinorDotPure /: MakeBoxes[SpinorDotPure[label_][$lam],TraditionalForm|StandardForm]:=SpinorDotPureLBox[ToBoxes[label]];
-SpinorDotPure /: MakeBoxes[SpinorDotPure[label_][$mu],TraditionalForm|StandardForm]:=SpinorDotPureMBox[ToBoxes[label]];
+SpinorDotBare /: MakeBoxes[SpinorDotBare[label_][$lam],TraditionalForm|StandardForm]:=SpinorDotBareLBox[ToBoxes[label]];
+SpinorDotBare /: MakeBoxes[SpinorDotBare[label_][$mu],TraditionalForm|StandardForm]:=SpinorDotBareMBox[ToBoxes[label]];
 
 If[frontend==1,
-SetOptions[EvaluationNotebook[],InputAliases -> DeleteDuplicates@Append[InputAliases /. Options[EvaluationNotebook[], InputAliases], "ltp" -> SpinorDotPureLBox["\[SelectionPlaceholder]"]]];
-SetOptions[EvaluationNotebook[],InputAliases -> DeleteDuplicates@Append[InputAliases /. Options[EvaluationNotebook[], InputAliases], "mtp" -> SpinorDotPureMBox["\[SelectionPlaceholder]"]]];
+SetOptions[EvaluationNotebook[],InputAliases -> DeleteDuplicates@Append[InputAliases /. Options[EvaluationNotebook[], InputAliases], "ltp" -> SpinorDotBareLBox["\[SelectionPlaceholder]"]]];
+SetOptions[EvaluationNotebook[],InputAliases -> DeleteDuplicates@Append[InputAliases /. Options[EvaluationNotebook[], InputAliases], "mtp" -> SpinorDotBareMBox["\[SelectionPlaceholder]"]]];
 ];
 
 
@@ -589,6 +591,14 @@ mp[x_+a_. momlabel_String,y_]:=mp[x,y]+a*mp[momlabel,y];
 mp[a_*momlabel_String,y_]:=a*mp[momlabel,y];
 
 
+(* ::Subsection::Closed:: *)
+(*Mandelstam invariants*)
+
+
+(*Just implement the orderlessness of the Mandelstam invariants*)
+SetAttributes[S,Orderless];
+
+
 (* ::Section:: *)
 (*Actions on building blocks*)
 
@@ -631,7 +641,7 @@ Return[FixedInvariants//Sort];
 SetInvariants[]:=(FixedInvariants//Sort);
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*ClearInvariants*)
 
 
@@ -656,6 +666,13 @@ FixedInvariants/.{"mp"->mp,"S"->S}/.RuleDelayed->SetDelayed;
 Protect[mp,S];
 Return[FixedInvariants//Sort];
 ];
+
+
+(* ::Subsection:: *)
+(*NewProcess*)
+
+
+NewProcess[]:=(ClearInvariants[];UndeclareMassless[];UndeclareMom[];);
 
 
 (* ::Section:: *)
