@@ -279,8 +279,8 @@ dot[x__,a_*SpinorDotBare[lab_][type_]]:=a*dot[x,SpinorDotBare[lab][type]];
 (*N.B. The matrix replacements are intended as defined on |\[Lambda]\[RightAngleBracket] and on |\[Lambda]], so when applying to \[LeftAngleBracket]\[Lambda]| and [\[Lambda]| minus signs appear when the number of matrices applied is odd*)
 
 
-SpinoReplace::invalid="Some of the replacements assume an invalid form, please check input. Recall that an odd number of momentum matrices acting on a dotted spinor change it to undotted and viceversa.";
-SpinorReplace2[exp_,reps_]:=Catch[Block[{locexpSH,locrepsSH,agwrapper,sqwrapper,SpinorAngleBracket,SpinorSquareBracket,Chain,specialSH,list1SH,list2SH,auxlabsSH,repsSH},
+SpinorReplace::invalid="Some of the replacements assume an invalid form, please check input. Recall that an odd number of momentum matrices acting on a dotted spinor change it to undotted and viceversa.";
+SpinorReplace[exp_,reps_]:=Catch[Block[{locexpSH,locrepsSH,agwrapper,sqwrapper,SpinorAngleBracket,SpinorSquareBracket,Chain,specialSH,list1SH,list2SH,auxlabsSH,repsSH},
 
 (*We replace Dot with a local defined dot symbol, because Dot has some properties which screw up our pattern matching later on*)
 locrepsSH={reps}/.Dot->dot//Flatten;
@@ -309,7 +309,7 @@ locrepsSH=Select[locrepsSH,FreeQ[#,dot]&];
 
 (*Test the correcteness of the replacements*)
 If[AnyTrue[locrepsSH,((FreeQ[#,agwrapper]&&FreeQ[#,sqwrapper])||(!FreeQ[#,agwrapper]&&!FreeQ[#,sqwrapper])&)],
-Message[SpinoReplace::invalid];
+Message[SpinorReplace::invalid];
 Throw[$Failed];
 ];
 
@@ -344,7 +344,9 @@ If[Length[specialSH]>0,
 specialSH=specialSH/.{dot[A__,agwrapper[x_]]:>If[OddQ[Length[{A}]],sqwrapper[{{A},x}],agwrapper[{{A},x}]],dot[A__,sqwrapper[x_]]:>If[OddQ[Length[{A}]],agwrapper[{{A},x}],sqwrapper[{{A},x}]]};
 (*Test the correcteness of the replacements*)
 If[AnyTrue[specialSH,((FreeQ[#,agwrapper]&&FreeQ[#,sqwrapper])||(!FreeQ[#,agwrapper]&&!FreeQ[#,sqwrapper])&)],
-Throw["Some replacements are given in an unknown form. Please check input."];
+Message[SpinorReplace::invalid];
+Throw[$Failed];
+(*Throw["Some replacements are given in an unknown form. Please check input."];*)
 ];
 
 (*Now we transform replacement rules for the wrappers into equalities*)
