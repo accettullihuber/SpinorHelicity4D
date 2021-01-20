@@ -297,7 +297,7 @@ SpinorUndot[Times[int_?Negative,a1___,momlabel_String,a2___]][type_][upper_][low
 SpinorUndot[a_*momlabel_String][type_][upper_][lower_]:=a*SpinorUndot[momlabel][type][upper][lower];
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*SpinorUndotBare*)
 
 
@@ -317,6 +317,16 @@ If[frontend==1,
 SetOptions[EvaluationNotebook[],InputAliases -> DeleteDuplicates@Append[InputAliases /. Options[EvaluationNotebook[], InputAliases], "lp" -> SpinorUndotBareLBox["\[SelectionPlaceholder]"]]];
 SetOptions[EvaluationNotebook[],InputAliases -> DeleteDuplicates@Append[InputAliases /. Options[EvaluationNotebook[], InputAliases], "mp" -> SpinorUndotBareMBox["\[SelectionPlaceholder]"]]];
 ];
+
+(*Define the properties with respect to declared momenta*)
+SpinorUndotBare[momlabel_][type_]/;AnyTrue[MomList,!FreeQ[momlabel,#]&]:=SpinorUndotBare[momlabel/.MomReps][type];
+SpinorUndotBare[x_+a_.*momlabel_String][type_]:=SpinorUndotBare[x][type]+SpinorUndotBare[a*momlabel][type];
+SpinorUndotBare[Times[int_?Negative,a1___,momlabel_String,a2___]][type_]:=I*(-int)SpinorUndotBare[a1*momlabel*a2][type];
+SpinorUndotBare[a_*momlabel_String][type_]:=a*SpinorUndotBare[momlabel][type];
+
+(*Define that an obar in the momentum label becomes a $mu*)
+SpinorUndotBare[obar[x_]][$lam]:=SpinorUndotBare[x][$mu];
+SpinorUndotBare[obar[x_]][$mu]:=SpinorUndotBare[x][$mu];
 
 
 (* ::Subsection::Closed:: *)
@@ -374,7 +384,7 @@ SpinorDot[Times[int_?Negative,a1___,momlabel_String,a2___]][type_][upper_][lower
 SpinorDot[a_*momlabel_String][type_][upper_][lower_]:=a*SpinorDot[momlabel][type][upper][lower];
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*SpinorDotBare*)
 
 
@@ -394,6 +404,16 @@ If[frontend==1,
 SetOptions[EvaluationNotebook[],InputAliases -> DeleteDuplicates@Append[InputAliases /. Options[EvaluationNotebook[], InputAliases], "ltp" -> SpinorDotBareLBox["\[SelectionPlaceholder]"]]];
 SetOptions[EvaluationNotebook[],InputAliases -> DeleteDuplicates@Append[InputAliases /. Options[EvaluationNotebook[], InputAliases], "mtp" -> SpinorDotBareMBox["\[SelectionPlaceholder]"]]];
 ];
+
+(*Define the properties with respect to declared momenta*)
+SpinorDotBare[momlabel_][type_]/;AnyTrue[MomList,!FreeQ[momlabel,#]&]:=SpinorDotBare[momlabel/.MomReps][type];
+SpinorDotBare[x_+a_.*momlabel_String][type_]:=SpinorDotBare[x][type]+SpinorDotBare[a*momlabel][type];
+SpinorDotBare[Times[int_?Negative,a1___,momlabel_String,a2___]][type_]:=I*(-int)SpinorDotBare[a1*momlabel*a2][type];
+SpinorDotBare[a_*momlabel_String][type_]:=a*SpinorDotBare[momlabel][type];
+
+(*Define that an obar in the momentum label becomes a $mu*)
+SpinorDotBare[obar[x_]][$lam]:=SpinorDotBare[x][$mu];
+SpinorDotBare[obar[x_]][$mu]:=SpinorDotBare[x][$mu];
 
 
 (* ::Subsection::Closed:: *)
