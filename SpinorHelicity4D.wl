@@ -30,6 +30,7 @@ SpinorPalette::usage="SpinorPalette[] opens the input palette."
 
 
 SpinorReplace::usage="SpinorReplace[exp,reps] applies the spinor replacements reps to the expression exp. The replacements need to be given in terms of the bare spinors SpinorUndotBare and SpinorDotBare, and can be any suitable linear combination of them. e replacements may also involve momentum matrices applied to the spinors, which are given for example as p.q.\[Lambda][p1]."
+CompleteMandelstam::usage="CompleteMandelstam[exp] turns products of the type \[LeftAngleBracket]ij\[RightAngleBracket][ji] into the Mandelstam invariant S[i,j] for massless particles i,j."
 
 
 (* ::Section:: *)
@@ -255,11 +256,19 @@ SpinorPalette[]:=CreatePalette[DynamicModule[{opener1=True,opener2=False},Column
 (*Main Functions*)
 
 
+(* ::Subsection::Closed:: *)
+(*MasslessQ (private)*)
+
+
+(*Test if a label belongs to MasslessMomenta*)
+MasslessQ[x_]:=MemberQ[MasslessMomenta,x];
+
+
 (* ::Subsection:: *)
 (*SpinorReplace*)
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Auxiliary functions*)
 
 
@@ -272,7 +281,7 @@ dot[x__,y_+a_.*SpinorDotBare[lab_][type_]]:=dot[x,y]+dot[x,a*SpinorDotBare[lab][
 dot[x__,a_*SpinorDotBare[lab_][type_]]:=a*dot[x,SpinorDotBare[lab][type]];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*The replacement function*)
 
 
@@ -399,6 +408,26 @@ locexpSH=locexpSH/.Reverse/@repsSH;
 
 Throw[locexpSH];
 ];
+];
+
+
+(* ::Subsection:: *)
+(*CompleteMandelstam*)
+
+
+CompleteMandelstam[test_]:=Block[{SpinorAngleBracket,SpinorSquareBracket,Power},
+(*Define a set of local properties for the angle and square brackets*)
+(*positive powers*)
+Power /: Times[Power[SpinorAngleBracket[x_?MasslessQ,y_?MasslessQ],n_?Positive],Power[SpinorSquareBracket[x_,y_],m_?Positive]]:=If[n>=m,Times[Power[SpinorAngleBracket[x,y],n-m],Power[S[x,y],m]],Times[Power[SpinorSquareBracket[x,y],m-n],Power[S[x,y],n]]];
+(*Negative powers*)
+Power /: Times[Power[SpinorAngleBracket[x_?MasslessQ,y_?MasslessQ],n_?Negative],Power[SpinorSquareBracket[x_,y_],m_?Negative]]:=If[n>=m,Times[Power[SpinorSquareBracket[x,y],m-n],Power[S[x,y],n]],Times[Power[SpinorAngleBracket[x,y],n-m],Power[S[x,y],m]]];
+(*One Power and one plain*)
+Power /: Times[SpinorAngleBracket[x_?MasslessQ,y_?MasslessQ],Power[SpinorSquareBracket[x_,y_],m_]]:=Times[S[x,y],Power[SpinorSquareBracket[x,y],m-1]];
+Power /: Times[SpinorSquareBracket[x_?MasslessQ,y_?MasslessQ],Power[SpinorAngleBracket[x_,y_],m_]]:=Times[S[x,y],Power[SpinorAngleBracket[x,y],m-1]];
+(*Both plain*)
+SpinorAngleBracket /: Times[SpinorAngleBracket[x_?MasslessQ,y_?MasslessQ],SpinorSquareBracket[x_,y_]]:=S[x,y];
+(*Return output*)
+Return[test];
 ];
 
 

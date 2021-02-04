@@ -116,7 +116,7 @@ UndeclareMom[]:=(MomList={};MomReps={};MomList);
 Protect[DeclareMom,UndeclareMom];
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*DeclareMassless and UndeclareMassless*)
 
 
