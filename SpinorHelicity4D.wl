@@ -256,12 +256,12 @@ SpinorPalette[]:=CreatePalette[DynamicModule[{opener1=True,opener2=False},Column
 (*Main Functions*)
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*MasslessQ (private)*)
 
 
 (*Test if a label belongs to MasslessMomenta*)
-MasslessQ[x_]:=MemberQ[MasslessMomenta,x];
+MasslessQ[x_]:=MemberQ[SpinorBuildingBlocks`Private`MasslessMomenta,x];
 
 
 (* ::Subsection:: *)
@@ -418,14 +418,14 @@ Throw[locexpSH];
 CompleteMandelstam[test_]:=Block[{SpinorAngleBracket,SpinorSquareBracket,Power},
 (*Define a set of local properties for the angle and square brackets*)
 (*positive powers*)
-Power /: Times[Power[SpinorAngleBracket[x_?MasslessQ,y_?MasslessQ],n_?Positive],Power[SpinorSquareBracket[x_,y_],m_?Positive]]:=If[n>=m,Times[Power[SpinorAngleBracket[x,y],n-m],Power[S[x,y],m]],Times[Power[SpinorSquareBracket[x,y],m-n],Power[S[x,y],n]]];
+Power /: Times[Power[SpinorAngleBracket[x_?MasslessQ,y_?MasslessQ],n_?Positive],Power[SpinorSquareBracket[x_,y_],m_?Positive]]:=If[n>=m,Times[Power[SpinorAngleBracket[x,y],n-m],Power[-S[x,y],m]],Times[Power[SpinorSquareBracket[x,y],m-n],Power[-S[x,y],n]]];
 (*Negative powers*)
-Power /: Times[Power[SpinorAngleBracket[x_?MasslessQ,y_?MasslessQ],n_?Negative],Power[SpinorSquareBracket[x_,y_],m_?Negative]]:=If[n>=m,Times[Power[SpinorSquareBracket[x,y],m-n],Power[S[x,y],n]],Times[Power[SpinorAngleBracket[x,y],n-m],Power[S[x,y],m]]];
+Power /: Times[Power[SpinorAngleBracket[x_?MasslessQ,y_?MasslessQ],n_?Negative],Power[SpinorSquareBracket[x_,y_],m_?Negative]]:=If[n>=m,Times[Power[SpinorSquareBracket[x,y],m-n],Power[-S[x,y],n]],Times[Power[SpinorAngleBracket[x,y],n-m],Power[-S[x,y],m]]];
 (*One Power and one plain*)
-Power /: Times[SpinorAngleBracket[x_?MasslessQ,y_?MasslessQ],Power[SpinorSquareBracket[x_,y_],m_]]:=Times[S[x,y],Power[SpinorSquareBracket[x,y],m-1]];
-Power /: Times[SpinorSquareBracket[x_?MasslessQ,y_?MasslessQ],Power[SpinorAngleBracket[x_,y_],m_]]:=Times[S[x,y],Power[SpinorAngleBracket[x,y],m-1]];
+Power /: Times[SpinorAngleBracket[x_?MasslessQ,y_?MasslessQ],Power[SpinorSquareBracket[x_,y_],m_]]:=Times[-S[x,y],Power[SpinorSquareBracket[x,y],m-1]];
+Power /: Times[SpinorSquareBracket[x_?MasslessQ,y_?MasslessQ],Power[SpinorAngleBracket[x_,y_],m_]]:=Times[-S[x,y],Power[SpinorAngleBracket[x,y],m-1]];
 (*Both plain*)
-SpinorAngleBracket /: Times[SpinorAngleBracket[x_?MasslessQ,y_?MasslessQ],SpinorSquareBracket[x_,y_]]:=S[x,y];
+SpinorAngleBracket /: Times[SpinorAngleBracket[x_?MasslessQ,y_?MasslessQ],SpinorSquareBracket[x_,y_]]:=-S[x,y];
 (*Return output*)
 Return[test];
 ];
