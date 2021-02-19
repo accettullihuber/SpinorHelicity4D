@@ -31,6 +31,12 @@ SpinorPalette::usage="SpinorPalette[] opens the input palette."
 
 SpinorReplace::usage="SpinorReplace[exp,reps] applies the spinor replacements reps to the expression exp. The replacements need to be given in terms of the bare spinors SpinorUndotBare and SpinorDotBare, and can be any suitable linear combination of them. e replacements may also involve momentum matrices applied to the spinors, which are given for example as p.q.\[Lambda][p1]."
 CompleteMandelstam::usage="CompleteMandelstam[exp] turns products of the type \[LeftAngleBracket]ij\[RightAngleBracket][ji] into the Mandelstam invariant S[i,j] for massless particles i,j."
+ToChain::usage="ToChain[exp] closes spinors of the |p\[RightAngleBracket][p| into momenta building chains of spinor products. So for example \[LeftAngleBracket]1 2\[RightAngleBracket][2 3] becomes \[LeftAngleBracket]1 2 3]. ToChain allows for the option MinimalChains."
+MinimalChains::usage="MinimalChains is an option for ToChain which allows True (default) or False as values. If set to True chains will be of minimal possible length."
+ChainToSpinor::usage="ChainToSpinor[exp] transforms chain objects in exp into products of spinor brackets."
+ChainSimplify::usage="ChainSimplify[exp,Options] uses properties of the chains to simplify them, reducing them to chains where a given momentum appears at most once and scalar products. It allows for the options MomCon and ReduceComplete. Notice that in order for the simplifications to work best the momenta should be first declared through DeclareMom and massless momenta should be specified by DeclareMassless."
+MomCon::usage="MomCon is an option for ChainSimplify which allows to use momentum conservation to simplify the chains. It must be defined as a list of replacements."
+ReduceComplete::usage="ReduceComplete is an option for ChainSimplify which assumes boolean values, default is False. If set to True the function will order the momenta inside the chains, removing in this way spurious structures which could be obtained from each other by reordering. Be aware that this might not actually reduce the number of terms in the expression because of the reordering procedure."
 
 
 (* ::Section:: *)
@@ -256,12 +262,12 @@ SpinorPalette[]:=CreatePalette[DynamicModule[{opener1=True,opener2=False},Column
 (*Main Functions*)
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*MasslessQ (private)*)
 
 
-(*Test if a label belongs to MasslessMomenta*)
-MasslessQ[x_]:=MemberQ[SpinorBuildingBlocks`Private`MasslessMomenta,x];
+(*Test if a label belongs to MasslessMomenta.*)
+MasslessQ[x_]:=MemberQ[SpinorBuildingBlocks`Private`MasslessMomentaAll,x];
 
 
 (* ::Subsection:: *)
@@ -411,7 +417,7 @@ Throw[locexpSH];
 ];
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*CompleteMandelstam*)
 
 
@@ -428,6 +434,117 @@ Power /: Times[SpinorSquareBracket[x_?MasslessQ,y_?MasslessQ],Power[SpinorAngleB
 SpinorAngleBracket /: Times[SpinorAngleBracket[x_?MasslessQ,y_?MasslessQ],SpinorSquareBracket[x_,y_]]:=-S[x,y];
 (*Return output*)
 Return[test];
+];
+
+
+(* ::Subsection::Closed:: *)
+(*ToChain*)
+
+
+Options[ToChain]={MinimalChains->True};
+ToChain[exp_,OptionsPattern[]]:=Block[{ChainPow,locexp},
+(*Chain properties:*)
+
+(*Basics*)
+ChainPow[x__][0]:=1;
+
+(*Minus signs in the external brackest*)
+ChainPow[type1_,-x_,{y___},z_,type2_][n_]/;MemberQ[MomList,x]:=(I)^n*ChainPow[type1,x,{y},z,type2][n];
+ChainPow[type1_,x_,{y___},-z_,type2_][n_]/;MemberQ[MomList,z]:=(I)^n*ChainPow[type1,x,{y},z,type2][n];
+ChainPow[type1_,-x_,{y___},-z_,type2_][n_]/;MemberQ[MomList,x]&&MemberQ[MomList,z]:=(-1)^n*ChainPow[type1,x,{y},z,type2][n];
+
+(*SquareAngle as AngleSquare*)
+ChainPow[$square,x_,{y__},z_,$angle][n_]:=ChainPow[$angle,z,Reverse[{y}],x,$square][n];
+
+(*The actual contraction properties*)
+
+(* (x...y\[RightAngleBracket][y...z) *)
+ChainPow /: Times[ChainPow[type1_,x_,{k___},y_,$angle][n_?Positive],ChainPow[$square,y_,{q___},z_,type2_][m_?Positive]]:=If[n>=m,ChainPow[type1,x,{k,y,q},z,type2][m]ChainPow[type1,x,{k},y,$angle][n-m],
+ChainPow[type1,x,{k,y,q},z,type2][n]ChainPow[$square,y,{q},z,type2][m-n]
+];
+
+ChainPow /: Times[ChainPow[type1_,x_,{k___},y_,$angle][n_?Negative],ChainPow[$square,y_,{q___},z_,type2_][m_?Negative]]:=If[n<=m,ChainPow[type1,x,{k,y,q},z,type2][m]ChainPow[type1,x,{k},y,$angle][n-m],
+ChainPow[type1,x,{k,y,q},z,type2][n]ChainPow[$square,y,{q},z,type2][m-n]
+];
+
+(*\[LeftAngleBracket]y...x)[y...z) *)
+ChainPow /: Times[ChainPow[$angle,y_,{k___},x_,type1_][n_?Positive],ChainPow[$square,y_,{q___},z_,type2_][m_?Positive]]:=If[n>=m,
+(-1)^(m*(Length[{k}]+1))*ChainPow[type1,x,{Sequence@@Reverse[{k}],y,q},z,type2][m]ChainPow[$angle,y,{k},x,type1][n-m],
+(-1)^(n*(Length[{k}]+1))*ChainPow[type1,x,{Sequence@@Reverse[{k}],y,q},z,type2][n]ChainPow[$square,y,{q},z,type2][m-n]
+];
+
+ChainPow /: Times[ChainPow[$angle,y_,{k___},x_,type1_][n_?Negative],ChainPow[$square,y_,{q___},z_,type2_][m_?Negative]]:=If[n<=m,
+(-1)^(m*(Length[{k}]+1))*ChainPow[type1,x,{Sequence@@Reverse[{k}],y,q},z,type2][m]ChainPow[$angle,y,{k},x,type1][n-m],
+(-1)^(n*(Length[{k}]+1))*ChainPow[type1,x,{Sequence@@Reverse[{k}],y,q},z,type2][n]ChainPow[$square,y,{q},z,type2][m-n]
+];
+
+(*(x...y\[RightAngleBracket][y...z)*)
+ChainPow /: Times[ChainPow[type1_,x_,{k___},y_,$angle][n_?Positive],ChainPow[type2_,z_,{q___},y_,$square][m_?Positive]]:=If[n>=m,
+(-1)^(m*(Length[{q}]+1))*ChainPow[type1,x,{k,y,Sequence@@Reverse[{q}]},z,type2][m]ChainPow[type1,x,{k},y,$angle][n-m],
+(-1)^(n*(Length[{q}]+1))*ChainPow[type1,x,{k,y,Sequence@@Reverse[{q}]},z,type2][n]ChainPow[type2,z,{q},y,$square][m-n]
+];
+
+ChainPow /: Times[ChainPow[type1_,x_,{k___},y_,$angle][n_?Negative],ChainPow[type2_,z_,{q___},y_,$square][m_?Negative]]:=If[n<=m,
+(-1)^(m*(Length[{q}]+1))*ChainPow[type1,x,{k,y,Sequence@@Reverse[{q}]},z,type2][m]ChainPow[type1,x,{k},y,$angle][n-m],
+(-1)^(n*(Length[{q}]+1))*ChainPow[type1,x,{k,y,Sequence@@Reverse[{q}]},z,type2][n]ChainPow[type2,z,{q},y,$square][m-n]
+];
+
+(* \[LeftAngleBracket]y...x)(z...y] *)
+ChainPow /: Times[ChainPow[$angle,y_,{k___},x_,type1_][n_?Positive],ChainPow[type2_,z_,{q___},y_,$square][m_?Positive]]:=If[n>=m,
+ChainPow[type2,z,{q,y,k},x,type1][m]ChainPow[$angle,y,{k},x,type1][n-m],
+ChainPow[type2,z,{q,y,k},x,type1][n]ChainPow[type2,z,{q},y,$square][m-n]
+];
+
+ChainPow /: Times[ChainPow[$angle,y_,{k___},x_,type1_][n_?Negative],ChainPow[type2_,z_,{q___},y_,$square][m_?Negative]]:=If[n<=m,
+ChainPow[type2,z,{q,y,k},x,type1][m]ChainPow[$angle,y,{k},x,type1][n-m],
+ChainPow[type2,z,{q,y,k},x,type1][n]ChainPow[type2,z,{q},y,$square][m-n]
+];
+
+(*Applying the properties to the expression*)
+(*Convert angle and square brackets to Chains*)
+locexp=exp//.{SpinorAngleBracket[x_,y_]:>Chain[$angle,x,{},y,$angle],SpinorSquareBracket[x_,y_]:>Chain[$square,x,{},y,$square],Chain[x__]:>ChainPow[x][1],Power[Chain[x__],n_]:>ChainPow[x][n]};
+
+(*Expand part of the expression containing ChainPow in order for the contractions to happen*)
+locexp=Expand[locexp,ChainPow];
+
+(*Convert back to angle and square brackets*)
+locexp=locexp//.{Chain[$angle,x_,{},y_,$angle]:>SpinorAngleBracket[x,y],Chain[$square,x_,{},y_,$square]:>SpinorSquareBracket[x,y],ChainPow[x__][n_]:>Power[Chain[x],n]};
+
+(*Reduce the chains to minimal form if required*)
+
+If[TrueQ[OptionValue[MinimalChains]],
+locexp=locexp//.{Chain[$angle,x_,{y__,x_,z__},k_,type2_]/;OddQ[Length[{y}]]:>Chain[$angle,x,{y},x,$square]*Chain[$angle,x,{z},k,type2],
+Chain[$square,x_,{y__,x_,z__},k_,type2_]/;OddQ[Length[{y}]]:>Chain[$square,x,{y},x,$angle]*Chain[$square,x,{z},k,type2],
+Chain[type1_,k_,{y__,x_,z__},x_,$angle]/;OddQ[Length[{z}]]:>Chain[type1,k,{y},x,$angle]*Chain[$square,x,{z},x,$angle],
+Chain[type1_,k_,{y__,x_,z__},x_,$square]/;OddQ[Length[{z}]]:>Chain[type1,k,{y},x,$square]*Chain[$angle,x,{z},x,$square]};
+];
+
+Return[locexp];
+];
+
+
+(* ::Subsection::Closed:: *)
+(*ChainToSpinor*)
+
+
+ChainToSpinor[exp_]:=Block[{locexp,Chain},
+(*Define the local properties of Chain which will allow for the splitting*)
+Chain[$angle,a1_,{x___,y_,z___},a2_,type_]/;MasslessQ[y]:=If[OddQ[Length[{x,Null}]],
+Chain[$angle,a1,{x},y,$angle]*Chain[$square,y,{z},a2,type],
+Chain[$angle,a1,{x},y,$square]*Chain[$angle,y,{z},a2,type]];
+Chain[$square,a1_,{x___,y_,z___},a2_,type_]/;MasslessQ[y]:=If[OddQ[Length[{x,Null}]],
+Chain[$square,a1,{x},y,$square]*Chain[$angle,y,{z},a2,type],
+Chain[$square,a1,{x},y,$angle]*Chain[$square,y,{z},a2,type]
+];
+
+(*Define locexp and let the definitions act*)
+locexp=exp;
+
+(*Replace empty chains with angle and square brackets*)
+locexp=locexp/.{Chain[$angle,x_,{},y_,$angle]:>SpinorAngleBracket[x,y],Chain[$square,x_,{},y_,$square]:>SpinorSquareBracket[x,y]};
+
+(*Return output*)
+Return[locexp];
 ];
 
 

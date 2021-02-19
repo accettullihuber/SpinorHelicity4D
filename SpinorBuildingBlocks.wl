@@ -53,7 +53,7 @@ SpinorUndotBare::usage="SpinorUndotBare[p][type] represents an undotted spinor s
 SpinorAngleBracket::usage="SpinorAngleBracket[p,q] is the spinor invariant \[LeftAngleBracket]p q\[RightAngleBracket]. SPinorAngleBracket is linear with respect to momenta which are members of MomList."
 SpinorSquareBracket::usage="SpinorSquareBracket[p,q] is the spinor invariant [p q]. SpinorSquareBracket is linear with respect to momenta which are members of MomList."
 Chain::usage="Chain[type1,p1,{p2,...,p3},p4,type2] represents a chain of contracted spinors. The two labels type1,type2 take values $angle/$square specifying the type of chain. For example Chain[$angle,p1,{p2},p3,$square]=\[LeftAngleBracket]p1 {p2} p3]."
-Mass::usage="Mass[i] is the mass of the i'th particle."
+Mass::usage="Mass[i] is the mass squared of the i'th particle."
 LeviCivitaSH::usage="LeviCivitaSH[a,b][type] represents the SU(2) Levi-Civita tensor which contracts the spinor indices. type takes values $up or $down."
 mp::usage="mp[p,q] represents the scalar product of p and q. mp is linear with respect to declared momenta."
 S::usage="S[p,...,q] is the Mandelstam invariant (p+...+q\!\(\*SuperscriptBox[\()\), \(2\)]\). S has attribute Orderless."
@@ -135,7 +135,7 @@ Protect[Extramass,Extramasstilde,MasslessMomenta,mp];
 Protect[DeclareMassless];*)
 
 
-MasslessMomenta={};
+(*MasslessMomenta={};
 
 DeclareMassless[moms__]:=Module[{x},
 x=Flatten[{moms}];
@@ -144,6 +144,43 @@ MasslessMomenta={MasslessMomenta,x}//Flatten//DeleteDuplicates//Sort;
 Do[Mass[i]=0;SetInvariants[mp[i,i]->0],{i,x}];
 (*Declare also as momentum labels*)
 DeclareMom[x];
+Protect[Mass];
+Return[MasslessMomenta];
+];
+
+DeclareMassless[]:=(MasslessMomenta);*)
+
+
+(*UndeclareMassless[moms___]:=Module[{x},
+x=Flatten[{moms}];
+Unprotect[Mass];
+If[Length[x]===0,
+x=DeclareMassless[];
+];
+Do[
+If[MemberQ[MasslessMomenta,i],
+Mass[i]=.;
+ClearInvariants[mp[i]];
+];
+,{i,x}];
+Protect[Mass];
+MasslessMomenta=DeleteCases[MasslessMomenta,y_/;MemberQ[x,y]];
+Return[MasslessMomenta];
+];*)
+
+
+(*The list MasslessMomentaAll contains also a string version of each of the massless momenta. This is needed for MasslessQ in SpinorHelicity4D because declared momenta get automatically replaced by strings*)
+MasslessMomenta={};
+MasslessMomentaAll={};
+
+DeclareMassless[moms__]:=Module[{x},
+x=Flatten[{moms}];
+Unprotect[Mass];
+MasslessMomenta={MasslessMomenta,x}//Flatten//DeleteDuplicates//Sort;
+Do[Mass[i]=0;SetInvariants[mp[i,i]->0],{i,x}];
+(*Declare also as momentum labels*)
+DeclareMom[x];
+MasslessMomentaAll=Join[MasslessMomenta,ToString/@MasslessMomenta];
 Protect[Mass];
 Return[MasslessMomenta];
 ];
@@ -165,6 +202,7 @@ ClearInvariants[mp[i]];
 ,{i,x}];
 Protect[Mass];
 MasslessMomenta=DeleteCases[MasslessMomenta,y_/;MemberQ[x,y]];
+MasslessMomentaAll=Join[MasslessMomenta,ToString/@MasslessMomenta];
 Return[MasslessMomenta];
 ];
 
