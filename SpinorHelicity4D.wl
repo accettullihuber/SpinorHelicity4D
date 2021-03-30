@@ -31,8 +31,8 @@ SpinorPalette::usage="SpinorPalette[] opens the input palette."
 
 SpinorReplace::usage="SpinorReplace[exp,reps] applies the spinor replacements reps to the expression exp. The replacements need to be given in terms of the bare spinors SpinorUndotBare and SpinorDotBare, and can be any suitable linear combination of them. e replacements may also involve momentum matrices applied to the spinors, which are given for example as p.q.\[Lambda][p1]."
 CompleteMandelstam::usage="CompleteMandelstam[exp] turns products of the type \[LeftAngleBracket]ij\[RightAngleBracket][ji] into the Mandelstam invariant S[i,j] for massless particles i,j."
-ToChain::usage="ToChain[exp] closes spinors of the |p\[RightAngleBracket][p| into momenta building chains of spinor products. So for example \[LeftAngleBracket]1 2\[RightAngleBracket][2 3] becomes \[LeftAngleBracket]1 2 3]. ToChain allows for the option MinimalChains."
-MinimalChains::usage="MinimalChains is an option for ToChain which allows True (default) or False as values. If set to True chains will be of minimal possible length."
+ToChain::usage="ToChain[exp] closes spinors of the |p\[RightAngleBracket][p| into momenta building chains of spinor products. So for example \[LeftAngleBracket]1 2\[RightAngleBracket][2 3] becomes \[LeftAngleBracket]1 2 3]. ToChain allows for the option ChainSelection."
+ChainSelection::usage="ChainSelection is an option for ToChain specifying which contraction to pick when multiple chains could be built out of the same brackets. Allowed values (given as strings) are ShortestChain, LongestChain ans MostTraces. For further information see the documentation."
 ChainToSpinor::usage="ChainToSpinor[exp] transforms chain objects in exp into products of spinor brackets."
 ChainSimplify::usage="ChainSimplify[exp,Options] uses properties of the chains to simplify them, reducing them to chains where a given momentum appears at most once and scalar products. It allows for the options MomCon and ReduceComplete. Notice that in order for the simplifications to work best the momenta should be first declared through DeclareMom and massless momenta should be specified by DeclareMassless."
 MomCon::usage="MomCon is an option for ChainSimplify which allows to use momentum conservation to simplify the chains. It must be defined as a list of replacements."
@@ -437,21 +437,25 @@ Return[test];
 ];
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*ToChain*)
 
 
-Options[ToChain]={MinimalChains->True};
-ToChain[exp_,OptionsPattern[]]:=Block[{ChainPow,locexp},
-(*Chain properties:*)
+(* ::Subsubsection::Closed:: *)
+(*toChainOld, fastest version but random chains*)
+
+
+(*Old version of ToChain. The resulting chain might not be minimal or of the best possible form but it is still a perfectly viable chain. We keep this as the fastest version.*)
+
+Options[toChainOld]={MinimalChains->True};
+toChainOld[exp_,OptionsPattern[]]:=Module[{locexp},
+
+Block[{ChainPow,SpinorAngleBracket,SpinorSquareBracket,Chain},
+
+(*ChainPow properties:*)
 
 (*Basics*)
 ChainPow[x__][0]:=1;
-
-(*Minus signs in the external brackest*)
-ChainPow[type1_,-x_,{y___},z_,type2_][n_]/;MemberQ[MomList,x]:=(I)^n*ChainPow[type1,x,{y},z,type2][n];
-ChainPow[type1_,x_,{y___},-z_,type2_][n_]/;MemberQ[MomList,z]:=(I)^n*ChainPow[type1,x,{y},z,type2][n];
-ChainPow[type1_,-x_,{y___},-z_,type2_][n_]/;MemberQ[MomList,x]&&MemberQ[MomList,z]:=(-1)^n*ChainPow[type1,x,{y},z,type2][n];
 
 (*SquareAngle as AngleSquare*)
 ChainPow[$square,x_,{y__},z_,$angle][n_]:=ChainPow[$angle,z,Reverse[{y}],x,$square][n];
@@ -501,25 +505,251 @@ ChainPow[type2,z,{q,y,k},x,type1][n]ChainPow[type2,z,{q},y,$square][m-n]
 ];
 
 (*Applying the properties to the expression*)
-(*Convert angle and square brackets to Chains*)
-locexp=exp//.{SpinorAngleBracket[x_,y_]:>Chain[$angle,x,{},y,$angle],SpinorSquareBracket[x_,y_]:>Chain[$square,x,{},y,$square],Chain[x__]:>ChainPow[x][1],Power[Chain[x__],n_]:>ChainPow[x][n]};
+(*Convert angle and square brackets to Chains and Chains to ChainPow*)
+SpinorAngleBracket[x_,y_]:=Chain[$angle,x,{},y,$angle];
+SpinorSquareBracket[x_,y_]:=Chain[$square,x,{},y,$square];
+ChainPow /: Power[ChainPow[x__][p_],n_]:=ChainPow[x][p*n];
+Chain[x__]:=ChainPow[x][1];
+
+locexp=exp;
 
 (*Expand part of the expression containing ChainPow in order for the contractions to happen*)
 locexp=Expand[locexp,ChainPow];
+];
+
+Block[{ChainPow,Chain},
 
 (*Convert back to angle and square brackets*)
-locexp=locexp//.{Chain[$angle,x_,{},y_,$angle]:>SpinorAngleBracket[x,y],Chain[$square,x_,{},y_,$square]:>SpinorSquareBracket[x,y],ChainPow[x__][n_]:>Power[Chain[x],n]};
+Chain[$angle,x_,{},y_,$angle]:=SpinorAngleBracket[x,y];
+Chain[$square,x_,{},y_,$square]:=SpinorSquareBracket[x,y];
+ChainPow[x__][n_]:=Power[Chain[x],n];
+locexp=locexp;
+];
 
 (*Reduce the chains to minimal form if required*)
 
 If[TrueQ[OptionValue[MinimalChains]],
-locexp=locexp//.{Chain[$angle,x_,{y__,x_,z__},k_,type2_]/;OddQ[Length[{y}]]:>Chain[$angle,x,{y},x,$square]*Chain[$angle,x,{z},k,type2],
-Chain[$square,x_,{y__,x_,z__},k_,type2_]/;OddQ[Length[{y}]]:>Chain[$square,x,{y},x,$angle]*Chain[$square,x,{z},k,type2],
-Chain[type1_,k_,{y__,x_,z__},x_,$angle]/;OddQ[Length[{z}]]:>Chain[type1,k,{y},x,$angle]*Chain[$square,x,{z},x,$angle],
-Chain[type1_,k_,{y__,x_,z__},x_,$square]/;OddQ[Length[{z}]]:>Chain[type1,k,{y},x,$square]*Chain[$angle,x,{z},x,$square]};
+Block[{Chain},
+(*Splitting chains into smaller chains*)
+Chain[$angle,x_,{y___,x_,z___},k_,type2_]/;OddQ[Length[{y}]]:=Chain[$angle,x,{y},x,$square]*Chain[$angle,x,{z},k,type2];
+	Chain[$square,x_,{y___,x_,z___},k_,type2_]/;OddQ[Length[{y}]]:=Chain[$square,x,{y},x,$angle]*Chain[$square,x,{z},k,type2];
+	Chain[type1_,k_,{y___,x_,z___},x_,$angle]/;OddQ[Length[{z}]]:=Chain[type1,k,{y},x,$angle]*Chain[$square,x,{z},x,$angle];
+	Chain[type1_,k_,{y___,x_,z___},x_,$square]/;OddQ[Length[{z}]]:=Chain[type1,k,{y},x,$square]*Chain[$angle,x,{z},x,$square];
+
+(*Converting emty chains into brackets*)
+Chain[$angle,x_,{},y_,$angle]:=SpinorAngleBracket[x,y];
+Chain[$square,x_,{},y_,$square]:=SpinorAngleBracket[x,y];
+
+locexp=locexp;
+];
+
 ];
 
 Return[locexp];
+];
+
+
+(* ::Subsubsection::Closed:: *)
+(*Auxiliary for toChainNew*)
+
+
+(*This is the new version of ToChain which allows to select *)
+
+
+(*Auxiliary function to test for duplicates in a list, returns False if there are no duplicates*)
+
+duplicatesQ = 0 ===Signature@#&;
+
+(*Auxiliary function for testing if a contraction is possible, i.e. if every bracket appears at most once*)
+
+feasibilitytest =Or@@ duplicatesQ/@Transpose@(First/@Transpose/@#)&;
+
+
+(*Ordering function for the lists of contractions, to bring them in sequntial order ready to be chained*)
+(*We assume everything to be already paired up by contracted angle brackets. Further connect by contracted angles*)
+
+chorder /: List[x1___,chorder[{{i1_,j1_},{i2_,j2_}},y1___],x2___,chorder[{{i1_,j3_},{i4_,j4_}},y2___],x3___]:=List[x1,x2,x3,chorder[Sequence@@Reverse[{y2}],{{i1,j3},{i4,j4}},{{i1,j1},{i2,j2}},y1]];
+chorder /: List[x1___,chorder[y1___,{{i1_,j1_},{i2_,j2_}}],x2___,chorder[{{i1_,j3_},{i4_,j4_}},y2___],x3___]:=List[x1,x2,x3,chorder[y1,{{i1,j1},{i2,j2}},{{i1,j3},{i4,j4}},y2]];
+chorder /: List[x1___,chorder[{{i1_,j3_},{i4_,j4_}},y2___],x2___,chorder[y1___,{{i1_,j1_},{i2_,j2_}}],x3___]:=List[x1,x2,x3,chorder[y1,{{i1,j1},{i2,j2}},{{i1,j3},{i4,j4}},y2]];
+chorder /: List[x1___,chorder[y1___,{{i1_,j1_},{i2_,j2_}}],x2___,chorder[y2___,{{i1_,j3_},{i4_,j4_}}],x3___]:=List[x1,x2,x3,chorder[y1,{{i1,j1},{i2,j2}},{{i1,j3},{i4,j4}},Sequence@@Reverse[{y2}]]];
+
+
+(*This function converts lists of brackets into a chain. Needs to be embedded in previous code*)
+
+(*We assume traces have been converted from even to odd number of contractions*)
+
+(*Single chain. I think/hope that the use of a Length test intesad of a direct pattern matching increses speed, this is the reason why introduced an auxiliary function*)
+ChainBuilder[exp_List,ag_List,sq_List]/;Length@exp===1:=auxChainBuilder[exp,ag,sq]
+auxChainBuilder[{{{i1_,1},{i2_,1}}},ag_,sq_]:=-Chain[$angle,Last@ag[[i1]],{First@ag[[i1]]},Last@sq[[i2]],$square];
+auxChainBuilder[{{{i1_,1},{i2_,2}}},ag_,sq_]:=Chain[$angle,Last@ag[[i1]],{First@ag[[i1]]},First@sq[[i2]],$square];
+auxChainBuilder[{{{i1_,2},{i2_,1}}},ag_,sq_]:=Chain[$angle,First@ag[[i1]],{Last@ag[[i1]]},Last@sq[[i2]],$square];
+auxChainBuilder[{{{i1_,2},{i2_,2}}},ag_,sq_]:=-Chain[$angle,First@ag[[i1]],{Last@ag[[i1]]},First@sq[[i2]],$square];
+
+(*Even angle chains*)
+ChainBuilder[exp_List,ag_List,sq_List]/;EvenQ@Length@exp&&exp[[1,2,1]]===exp[[2,2,1]]:=(-1)^Count[Last/@Total/@exp,2|4,2]*(Chain[$angle,First@#,Rest@Most@#,Last@#,$angle]&@Flatten@({If[Last@#==1,Reverse@First@#,First@#]&@First@#,If[Last@#==2,Reverse@First@#,First@#]&/@Rest@#}&@Transpose@({Part[List@@@ag,#]&/@#1,#2}&@@Transpose@(First/@If[Length@exp>2,Drop[exp,{3,Length[exp],2}],exp]))));
+
+(*Even square chains*)
+ChainBuilder[exp_List,ag_List,sq_List]/;EvenQ@Length@exp&&exp[[1,2,1]]!=exp[[2,2,1]]:=(-1)^Count[Last/@Total/@exp,2|4,2]*(Chain[$square,First@#,Rest@Most@#,Last@#,$square]&@Flatten@({If[Last@#==1,Reverse@First@#,First@#]&@First@#,If[Last@#==2,Reverse@First@#,First@#]&/@Rest@#}&@Transpose@({Part[List@@@sq,#]&/@#1,#2}&@@Transpose@(Last/@If[Length@exp>2,Drop[exp,{3,Length[exp],2}],exp]))));
+
+(*Odd length chains. Just like in the even case with an addition of a final bracket*)
+ChainBuilder[exp_List,ag_List,sq_List]/;OddQ@Length@exp:=(-1)^Count[Last/@Total/@exp,2|4,2]*(Chain[$angle,First@#,Rest@#,If[Last@#==1,sq[[First@#,2]],sq[[First@#,1]]]&@Last@Last@exp,$square]&@Flatten@({If[Last@#==1,Reverse@First@#,First@#]&@First@#,If[Last@#==2,Reverse@First@#,First@#]&/@Rest@#}&@Transpose@({Part[List@@@ag,#]&/@#1,#2}&@@Transpose@(First/@If[Length@#>2,Drop[#,{3,Length[#],2}],#]&@Most@exp))));
+
+
+(*Function which given a list of brackets finda all possible chains that can built out of them, returns a list of possible chains and free uncontracted brackets*)
+AllChains[exp_List]:=Module[{ag,sq,ch,connections,momenta,candidatecontractions,chains,pp,unique,sign,localbrackets,labs,removed},
+
+(*Gather by angle and square head, chains are converted into angles and squares and in case mixed chains are found an appropriate connection is added. We take care of chains later on*)
+
+(*Angle and square chains are no problem, the only troublesome are the mixed chains, these are kept separate*)
+Block[{Chain},
+Chain[$angle,x_,y_,z_,$angle]:=SpinorAngleBracket[x,y,z];
+Chain[$square,x_,y_,z_,$square]:=SpinorSquareBracket[x,y,z];
+{ag,sq,ch}=Flatten[#,1]&/@{Select[#,(Head@First@#===SpinorAngleBracket&)],Select[#,(Head@First@#===SpinorSquareBracket&)],Select[#,(Head@First@#===Chain&)]}&@GatherBy[exp,Head];
+];
+
+(*In order to take care of mixed chains in a simple way we decompose them into an angle and square bracket and add a fixed connection to the list of connections, the rest follows automatically*)
+sign=1;
+Do[
+(*Decomposition into angle and square is done by introducing a unique label fro each chain, so that later on when contractions are performed there will be exactly for each of these.*)
+ag=Join[ag,{SpinorAngleBracket[i[[2]],Most@i[[3]],unique=pp[Last@i[[3]],Unique[]]]}];
+If[OrderedQ[{unique,i[[4]]}],
+sq=Join[sq,{SpinorSquareBracket[unique,i[[4]]]}];
+,
+(*Sign keeps track of signs since the arguments of the brackets need to be correctly ordered (this was an initial assumption on the input list so it must be mantained)*)
+sign=-1*sign;
+sq=Join[sq,{SpinorSquareBracket[i[[4]],unique]}];
+];
+,{i,ch}];
+
+(*Remove some redundancy by removing unnecessary powers*)
+Block[{SpinorAngleBracket,SpinorSquareBracket},
+SpinorSquareBracket[x_,y_,z_]:=SpinorSquareBracket[x,z];
+SpinorAngleBracket[x_,y_,z_]:=SpinorAngleBracket[x,z];
+removed={};
+
+If[Length@#>0,
+localbrackets=sq;
+Do[
+labs=Alternatives@@({First@#,Last@#}&@First@i);
+If[#>0,
+ag=DeleteCases[ag,First@i,1,#];removed=Join[removed,ConstantArray[First@i,#]];]&@(Length@i-Count[localbrackets,labs,2]);
+,{i,#}];
+]&@Select[Gather[ag],(Length@#>1&)];
+
+If[Length@#>0,
+localbrackets=ag;
+Do[
+labs=Alternatives@@({First@#,Last@#}&@First@i);
+If[#>0,sq=DeleteCases[sq,First@i,1,#];removed=Join[removed,ConstantArray[First@i,#]];]&@(Length@i-Count[localbrackets,labs,2]);
+,{i,#}];
+]&@Select[Gather[sq],(Length@#>1&)];
+
+
+];
+
+(*Find the momenta and their number*)
+Block[{SpinorAngleBracket,SpinorSquareBracket},
+SpinorSquareBracket[x_,y_,z_]:=SpinorSquareBracket[x,z];
+SpinorAngleBracket[x_,y_,z_]:=SpinorAngleBracket[x,z];
+
+(*These are the momenta and their multiplicities. They are found by extracting all the labels from the brackest, then counting the labels and looking at those which appear both as angle and squares. Then we take the minimum between the angle and square appearences, the mismatch gives the helicity weight which we do not need right now, the rest is the number of momenta which can be formed.*)
+If[Length[momenta=Select[#,(Length@First@#==2&)]&@GatherBy[#,Length]&@GatherBy[Join@@Tally/@Flatten/@{List@@@ag,List@@@sq},First]]>0,
+momenta={First@#1,Min@#2}&@@@Transpose/@First@momenta;
+,
+(*If momenta has length=0 no momenta are presents, no contractions can be made and we return the input list as it is*)
+Return[exp];
+];
+
+
+
+(*Extract the positions of the brackets containg each momentum and then pair them*)
+candidatecontractions=Flatten[#,1]&/@(Outer[List,#1,#2,1]&@@@({Position[ag,#],Position[sq,#]}&/@First@Transpose@momenta));
+
+(*Out of the candidatecontractions I have to select subsets with number of elements given by the multiplicity of the given momentum and then apply a feasibility check: every bracket can only appear once per momentum.*)
+chains=Subsets[#1,{#2}]&@@@Transpose@{candidatecontractions,Last@Transpose@momenta};
+(*Apply check:*)
+chains=DeleteCases[#,_?feasibilitytest]&/@chains;
+
+(*Out of these we need to take all possible combinations.*)
+chains=Flatten[#,1]&/@Tuples@chains;
+];
+
+(*Reoreder list such that the structure of contracted chains is visible*)
+chains={Apply[chorder,GatherBy[#,#[[2,1]]&]&/@chains,{2}],Flatten@({Part[ag,#]&/@#1,Part[sq,#]&/@#2,removed,sign}&@@{Complement[Range@Length@ag,#1],Complement[Range@Length@sq,#2]}&@@Map[First,Transpose@#,{2}])&/@chains};
+
+(*Next convert to chains the single parts*)
+Block[{chorder},
+
+(*Next we transformtraces from even to odd chains (so far we counted the number of momenta, now we count the number of connections)*)
+chorder[{{i1_,j1_},{i2_,j2_}},x__,{{i1_,_},{_,_}}]:=chorder[{{i1,j1},{i2,j2}},x];
+
+(*Build the chains*)
+chorder[x__]:=ChainBuilder[{x},ag,sq];
+
+(*Reconvert unique labels for mixed chains into original labels*)
+pp[x_,_]:=x;
+
+Return[Flatten/@Transpose@chains];
+];
+
+];
+
+
+(* ::Subsubsection::Closed:: *)
+(*toChainNew*)
+
+
+(*toChainNew is the new version of ToChain which is slower (due to combinatorics) but build all possible chains and selects the once fitting the criteria chosen by the user*)
+
+toChainNew[exp_,chainCrit_:"ShortestChain"]:=Module[{locexp,tochain,tochaininv,chainselect},
+locexp=exp;
+Block[{Power,Times},
+Power[f_[x__],p_?Negative]/;f==SpinorAngleBracket||f==SpinorSquareBracket||f==Chain:=tochaininv[Sequence@@ConstantArray[f[x],-p]];
+Power[f_[x__],p_]/;f==SpinorAngleBracket||f==SpinorSquareBracket||f==Chain:=tochain[Sequence@@ConstantArray[f[x],p]];
+Times[z___,f_[x__],y___]/;f==SpinorAngleBracket||f==SpinorSquareBracket||f==Chain:=Times[z,tochain[f[x]],y];
+locexp=locexp;
+];
+tochain /: Times[tochain[x__],tochain[y__],z___]:=Times[tochain[x,y],z];
+tochaininv /: Times[tochaininv[x__],tochaininv[y__],z___]:=Times[tochaininv[x,y],z];
+locexp=locexp;
+
+(*Basing on the options we decide which chain we want to pick*)
+Which[chainCrit==="ShortestChain",
+chainselect[chains_List]:=Times@@Last@SortBy[chains,Length],
+chainCrit==="LongestChain",
+chainselect[chains_List]:=Times@@First@SortBy[chains,Length],
+chainCrit==="MostTraces",
+chainselect[chains_List]:=Times@@Last@SortBy[chains,Length@Cases[#,Chain[$angle,x_,{__},x_,$square]:>1]&],
+True,
+chainselect[chains_List]:=Times@@Last@SortBy[chains,Length]
+];
+
+tochain[x__]:=chainselect@AllChains[{x}];
+tochaininv[x__]:=Power[chainselect@AllChains[{x}],-1];
+Return[locexp];
+];
+
+
+(* ::Subsubsection:: *)
+(*ToChain*)
+
+
+Options[ToChain]={ChainSelection->"RandomChain"};
+ToChain::opt="Unknown option, proceed with ShortestChain"
+
+
+(*ToChain takes simply redirects the call to the appropriate algorithm*)
+ToChain[exp_,OptionsPattern[]]:=Which[OptionValue[ChainSelection]==="RandomChain",
+toChainOld[exp],
+OptionValue[ChainSelection]==="ShortestChain",
+toChainNew[exp,"ShortestChain"],
+OptionValue[ChainSelection]==="LongestChain",
+toChainNew[exp,"LongestChain"],
+OptionValue[ChainSelection]==="MostTraces",
+toChainNew[exp,"MostTraces"],
+True,
+Message[ToChain::opt];
+toChainNew[exp]
 ];
 
 
