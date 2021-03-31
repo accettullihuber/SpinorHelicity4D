@@ -34,6 +34,8 @@ CompleteMandelstam::usage="CompleteMandelstam[exp] turns products of the type \[
 ToChain::usage="ToChain[exp] closes spinors of the |p\[RightAngleBracket][p| into momenta building chains of spinor products. So for example \[LeftAngleBracket]1 2\[RightAngleBracket][2 3] becomes \[LeftAngleBracket]1 2 3]. ToChain allows for the option ChainSelection."
 ChainSelection::usage="ChainSelection is an option for ToChain specifying which contraction to pick when multiple chains could be built out of the same brackets. Allowed values (given as strings) are ShortestChain, LongestChain ans MostTraces. For further information see the documentation."
 ChainToSpinor::usage="ChainToSpinor[exp] transforms chain objects in exp into products of spinor brackets."
+ChainMomentumCon::usage="ChainMomentumCon[exp,rule] applies momentum conservation to chains in exp following rule. If some of the momenta to be replaced appear as extrema of Dirac traces of the type \[LeftAngleBracket]p...p] this is rearranged in order to replace this momentum."
+ChainSort::usage="ChainSort[exp,ordering_List] sorts momenta appearing in chains in exp according to the order of the list ordering. The second argument is optional, if omitted canonical ordering is applied."
 ChainSimplify::usage="ChainSimplify[exp,Options] uses properties of the chains to simplify them, reducing them to chains where a given momentum appears at most once and scalar products. It allows for the options MomCon and ReduceComplete. Notice that in order for the simplifications to work best the momenta should be first declared through DeclareMom and massless momenta should be specified by DeclareMassless."
 MomCon::usage="MomCon is an option for ChainSimplify which allows to use momentum conservation to simplify the chains. It must be defined as a list of replacements."
 ReduceComplete::usage="ReduceComplete is an option for ChainSimplify which assumes boolean values, default is False. If set to True the function will order the momenta inside the chains, removing in this way spurious structures which could be obtained from each other by reordering. Be aware that this might not actually reduce the number of terms in the expression because of the reordering procedure."
@@ -270,7 +272,7 @@ SpinorPalette[]:=CreatePalette[DynamicModule[{opener1=True,opener2=False},Column
 MasslessQ[x_]:=MemberQ[SpinorBuildingBlocks`Private`MasslessMomentaAll,x];
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*SpinorReplace*)
 
 
@@ -730,7 +732,7 @@ Return[locexp];
 ];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*ToChain*)
 
 
@@ -753,11 +755,11 @@ toChainNew[exp]
 ];
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*ChainToSpinor*)
 
 
-ChainToSpinor[exp_]:=Block[{locexp,Chain},
+ChainToSpinor[exp_]:=Block[{Chain},
 (*Define the local properties of Chain which will allow for the splitting*)
 Chain[$angle,a1_,{x___,y_,z___},a2_,type_]/;MasslessQ[y]:=If[OddQ[Length[{x,Null}]],
 Chain[$angle,a1,{x},y,$angle]*Chain[$square,y,{z},a2,type],
@@ -766,15 +768,69 @@ Chain[$square,a1_,{x___,y_,z___},a2_,type_]/;MasslessQ[y]:=If[OddQ[Length[{x,Nul
 Chain[$square,a1,{x},y,$square]*Chain[$angle,y,{z},a2,type],
 Chain[$square,a1,{x},y,$angle]*Chain[$square,y,{z},a2,type]
 ];
+Chain[$angle,x_,{},y_,$angle]:=SpinorAngleBracket[x,y];
+Chain[$square,x_,{},y_,$square]:=SpinorSquareBracket[x,y];
 
 (*Define locexp and let the definitions act*)
+Return[exp];
+];
+
+
+(* ::Subsection::Closed:: *)
+(*ChainMomentumCon*)
+
+
+ChainMomentumCon[exp_,rule_]:=Module[{locexp,locrule,mom,mom2},
+
 locexp=exp;
+(*Take into account that rule could be a single rule or a list of rules*)
+locrule=Flatten[{rule},1];
+(*Convert replacements into lists*)
+locrule=List@@@locrule;
 
-(*Replace empty chains with angle and square brackets*)
-locexp=locexp/.{Chain[$angle,x_,{},y_,$angle]:>SpinorAngleBracket[x,y],Chain[$square,x_,{},y_,$square]:>SpinorSquareBracket[x,y]};
+(*Perform the replacements sequentially*)
+Do[
+mom=First@i;
+mom2=Last@i;
+(*Extrema replacement. Be careful that extrema replacements only work if there is an internal massless momentum which can take up the slot of extremum*)
+locexp=locexp/.{Chain[$angle,mom,{x___,y_?MasslessQ,z___},mom,$square]:>Chain[$angle,y,{z,mom,x},y,$square],Chain[$square,mom,{x___,y_?MasslessQ,z___},mom,$angle]:>Chain[$square,y,{z,mom,x},y,$angle]};
+(*Internal replacements*)
+locexp=locexp/.{Chain[type1_,x1_,{y1___,mom,y2___},x2_,type2_]:>Chain[type1,x1,{y1,mom2,y2},x2,type2]};
 
-(*Return output*)
+,{i,locrule}];
+
 Return[locexp];
+
+];
+
+
+(* ::Subsection:: *)
+(*ChainSort*)
+
+
+ChainSort[exp_,order_List:{}]:=Block[{Chain,SHorderedQ,SHlistordering},
+(*Pick sorting criterion. If a non-empty list of labels is given we use this to sort the chains*)
+If[Length[order]>0,
+SHlistordering=Join[order,ToString/@order];
+SHorderedQ=OrderedQ[#,(First@(FirstPosition[SHlistordering,#2])>First@(FirstPosition[SHlistordering,#1])&)]&,
+SHorderedQ=OrderedQ;
+];
+
+(*Define properties which reorder the chains with momenta in prescibed order*)
+Chain[type_,x1_,{y1___,z1_,z2_,y2___},x2_,type2_]/;SHorderedQ[{z2,z1}]:=2*mp[z1,z2]*Chain[type,x1,{y1,y2},x2,type2]-Chain[type,x1,{y1,z2,z1,y2},x2,type2];
+(*Chains which reduce to Dirac traces can be further simplified including also the extrema in the ordering. Here however you need to be carefull because the traces are chiral so there is a hidden gamma5! In other words if y3 and y1 are of even length the angle and square brackets swap roles*)
+(*Chain[$angle,x_,{y1___,y2_,y3___},x_,$square]/;AnyTrue[{y1,y2,y3},MasslessQ]&&First[Sort[Select[{y1,y2,y3},MasslessQ]]]===y2&&SHorderedQ[{y2,x}]:=
+If[OddQ[Length[{y3}]],
+Chain[$angle,y2,{y3,x,y1},y2,$square],
+Chain[$square,y2,{y3,x,y1},y2,$angle]];
+Chain[$square,x_,{y1___,y2_,y3___},x_,$angle]/;AnyTrue[{y1,y2,y3},MasslessQ]&&First[Sort[Select[{y1,y2,y3},MasslessQ]]]===y2&&SHorderedQ[{y2,x}]:=
+If[OddQ[Length[{y3}]],
+Chain[$square,y2,{y3,x,y1},y2,$angle],
+Chain[$angle,y2,{y3,x,y1},y2,$square]];*)
+Chain[$angle,x_,{},y_,$angle]:=SpinorAngleBracket[x,y];
+Chain[$square,x_,{},y_,$square]:=SpinorSquareBracket[x,y];
+
+Return[exp];
 ];
 
 
