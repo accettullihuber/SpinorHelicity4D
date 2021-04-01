@@ -36,9 +36,9 @@ ChainSelection::usage="ChainSelection is an option for ToChain specifying which 
 ChainToSpinor::usage="ChainToSpinor[exp] transforms chain objects in exp into products of spinor brackets."
 ChainMomentumCon::usage="ChainMomentumCon[exp,rule] applies momentum conservation to chains in exp following rule. If some of the momenta to be replaced appear as extrema of Dirac traces of the type \[LeftAngleBracket]p...p] this is rearranged in order to replace this momentum."
 ChainSort::usage="ChainSort[exp,ordering_List] sorts momenta appearing in chains in exp according to the order of the list ordering. The second argument is optional, if omitted canonical ordering is applied."
-ChainSimplify::usage="ChainSimplify[exp,Options] uses properties of the chains to simplify them, reducing them to chains where a given momentum appears at most once and scalar products. It allows for the options MomCon and ReduceComplete. Notice that in order for the simplifications to work best the momenta should be first declared through DeclareMom and massless momenta should be specified by DeclareMassless."
+ChainSimplify::usage="ChainSimplify[exp,Options] uses properties of the chains to simplify them, reducing them to products of chains where a given momentum appears at most once and scalar products. It allows for the options MomCon and ReduceComplete. Notice that in order for the simplifications to work best the momenta should be first declared through DeclareMom and massless momenta should be specified by DeclareMassless."
 MomCon::usage="MomCon is an option for ChainSimplify which allows to use momentum conservation to simplify the chains. It must be defined as a list of replacements."
-ReduceComplete::usage="ReduceComplete is an option for ChainSimplify which assumes boolean values, default is False. If set to True the function will order the momenta inside the chains, removing in this way spurious structures which could be obtained from each other by reordering. Be aware that this might not actually reduce the number of terms in the expression because of the reordering procedure."
+ReduceBySorting::usage="ReduceBySorting is an option for ChainSimplify, default is False. If set to True the function will order the momenta inside the chains. If set to a list of the ordering will follow the order in the list instead of canonical order."
 
 
 (* ::Section:: *)
@@ -755,7 +755,7 @@ toChainNew[exp]
 ];
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*ChainToSpinor*)
 
 
@@ -804,33 +804,107 @@ Return[locexp];
 ];
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*ChainSort*)
 
 
 ChainSort[exp_,order_List:{}]:=Block[{Chain,SHorderedQ,SHlistordering},
 (*Pick sorting criterion. If a non-empty list of labels is given we use this to sort the chains*)
 If[Length[order]>0,
-SHlistordering=Join[order,ToString/@order];
-SHorderedQ=OrderedQ[#,(First@(FirstPosition[SHlistordering,#2])>First@(FirstPosition[SHlistordering,#1])&)]&,
-SHorderedQ=OrderedQ;
-];
+(*Custom order, in order to take into account that some of the elements in the chain may be missing from the list we need to check momenta which are far apart *)
+SHlistordering=Flatten[Transpose@{ToString/@order,order}];
+SHorderedQ=OrderedQ[#,(First@(FirstPosition[SHlistordering,#2])>=First@(FirstPosition[SHlistordering,#1])&)]&;
 
 (*Define properties which reorder the chains with momenta in prescibed order*)
-Chain[type_,x1_,{y1___,z1_,z2_,y2___},x2_,type2_]/;SHorderedQ[{z2,z1}]:=2*mp[z1,z2]*Chain[type,x1,{y1,y2},x2,type2]-Chain[type,x1,{y1,z2,z1,y2},x2,type2];
-(*Chains which reduce to Dirac traces can be further simplified including also the extrema in the ordering. Here however you need to be carefull because the traces are chiral so there is a hidden gamma5! In other words if y3 and y1 are of even length the angle and square brackets swap roles*)
-(*Chain[$angle,x_,{y1___,y2_,y3___},x_,$square]/;AnyTrue[{y1,y2,y3},MasslessQ]&&First[Sort[Select[{y1,y2,y3},MasslessQ]]]===y2&&SHorderedQ[{y2,x}]:=
-If[OddQ[Length[{y3}]],
-Chain[$angle,y2,{y3,x,y1},y2,$square],
-Chain[$square,y2,{y3,x,y1},y2,$angle]];
-Chain[$square,x_,{y1___,y2_,y3___},x_,$angle]/;AnyTrue[{y1,y2,y3},MasslessQ]&&First[Sort[Select[{y1,y2,y3},MasslessQ]]]===y2&&SHorderedQ[{y2,x}]:=
-If[OddQ[Length[{y3}]],
-Chain[$square,y2,{y3,x,y1},y2,$angle],
-Chain[$angle,y2,{y3,x,y1},y2,$square]];*)
+Chain[type_,x1_,{y1___,z1_?(MemberQ[SHlistordering,#]&),z2_?(MemberQ[SHlistordering,#]&),y2___},x2_,type2_]/;!SHorderedQ[{z1,z2}]:=2*mp[z1,z2]*Chain[type,x1,{y1,y2},x2,type2]-Chain[type,x1,{y1,z2,z1,y2},x2,type2];
+Chain[type_,x1_,{y1___,z1_?(MemberQ[SHlistordering,#]&),y3___,y4_,z2_?(MemberQ[SHlistordering,#]&),y2___},x2_,type2_]/;!SHorderedQ[{z1,z2}]:=2*mp[y4,z2]*Chain[type,x1,{y1,z1,y3,y2},x2,type2]-Chain[type,x1,{y1,z1,y3,z2,y4,y2},x2,type2];
+
+(*Dirac traces can also have the extrema reordered*)
+
+Chain[$angle,x_?(MemberQ[SHlistordering,#]&),{y1___,y2_?((MemberQ[SHlistordering,#]&&MasslessQ[#])&),y3___},x_,$square]/; !SHorderedQ[{x,y2}]:=Chain[$angle,y2,{y3,x,y1},y2,$square];
+Chain[$square,x_?(MemberQ[SHlistordering,#]&),{y1___,y2_?((MemberQ[SHlistordering,#]&&MasslessQ[#])&),y3___},x_,$angle]/; !SHorderedQ[{x,y2}]:=Chain[$square,y2,{y3,x,y1},y2,$angle];
+,
+
+(*Canonical ordering, easy case, criteria checked on adjacient elements*)
+SHorderedQ=OrderedQ;
+
+(*Define properties which reorder the chains with momenta in prescibed order*)
+Chain[type_,x1_,{y1___,z1_,z2_,y2___},x2_,type2_]/;!OrderedQ[{z1,z2}]:=2*mp[z1,z2]*Chain[type,x1,{y1,y2},x2,type2]-Chain[type,x1,{y1,z2,z1,y2},x2,type2];
+
+(*Dirac traces can also have the extrema reordered*)
+
+Chain[$angle,x_,{y1___,y2_?(MasslessQ[#]&),y3___},x_,$square]/; !SHorderedQ[{x,y2}]:=Chain[$angle,y2,{y3,x,y1},y2,$square];
+Chain[$square,x_,{y1___,y2_?(MasslessQ[#]&),y3___},x_,$angle]/; !SHorderedQ[{x,y2}]:=Chain[$square,y2,{y3,x,y1},y2,$angle];
+];
+
 Chain[$angle,x_,{},y_,$angle]:=SpinorAngleBracket[x,y];
 Chain[$square,x_,{},y_,$square]:=SpinorSquareBracket[x,y];
 
 Return[exp];
+];
+
+
+(* ::Subsection:: *)
+(*ChainSimplify*)
+
+
+(*Messages*)
+ChainSimplify::momcon="Unknown form of momentum conservation, option MomCon ignored.";
+ChainSimplify::sort="Unknown form of ordering, option ReduceBySorting ignored"
+
+(*Options*)
+Options[ChainSimplify]={MomCon->{},ReduceBySorting->False};
+
+(*Function*)
+ChainSimplify[exp_,OptionsPattern[]]:=
+Module[{locexp},
+
+locexp=exp;
+(*Define local properties of chains for the simplification*)
+Block[{Chain},
+	Chain[type_,x_,{x_,y___},z_,type2_]:=0;
+	Chain[type_,x_,{y___,z_},z_,type2_]:=0;
+	Chain[type_,x_,{y___,z_,z_,k___},l_,type2_]:=mp[z,z]*Chain[type,x,{y,k},l,type2];
+	Chain[type1_,p1_,{x___,y_,l___,z_,y_,k___},p2_,type2_]:=2*mp[y,z]*Chain[type1,p1,{x,y,l,k},p2,type2]-Chain[type1,p1,{x,y,l,y,z,k},p2,type2];
+	Chain[t1_,x_,{y___,z_,x_,k___},p2_,t2_]:=2*mp[z,x]Chain[t1,x,{y,k},p2,t2]-Chain[t1,x,{y,x,z,k},p2,t2];
+	Chain[t1_,p1_,{y___,z_,x_,k___},z_,t2_]:=2*mp[z,x]Chain[t1,p1,{y,k},z,t2]-Chain[t1,p1,{y,x,z,k},z,t2];
+	Chain[$angle,x_,{y_},x_,$square]:=2*mp[x,y];
+	Chain[$square,x_,{y_},x_,$angle]:=2*mp[x,y];
+ Chain[$angle,x_,{},y_,$angle]:=SpinorAngleBracket[x,y];
+Chain[$square,x_,{},y_,$square]:=SpinorSquareBracket[x,y];
+
+(*Apply momentum conservation, if needed*)
+Which[
+	MatchQ[OptionValue[MomCon],{}],
+	Null,
+	AllTrue[OptionValue[MomCon],MatchQ[#,_Rule|_RuleDelayed]&],
+	locexp=ChainMomentumCon[locexp,OptionValue[MomCon]],
+	True,
+	Message[ChainSimplify::momcon]];
+
+(*If[Length@OptionValue[MomCon]>0,
+locexp=ChainMomentumCon[locexp,OptionValue[MomCon]];
+];*)
+
+(*Reorder chains if necessary:*)
+Switch[OptionValue[ReduceBySorting],
+	False,
+	Null,
+	True,
+	locexp=ChainSort[locexp],
+	_List,
+	locexp=ChainSort[locexp,OptionValue[ReduceBySorting]],
+	_,
+	Message[ChainSimplify::sort]];
+
+
+(*If[OptionValue[ReduceComplete],
+locexp=ChainOrder[locexp];
+];*)
+
+Return[locexp];
+];
+
 ];
 
 
