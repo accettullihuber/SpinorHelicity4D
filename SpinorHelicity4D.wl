@@ -30,7 +30,7 @@ SpinorPalette::usage="SpinorPalette[] opens the input palette."
 
 
 SpinorReplace::usage="SpinorReplace[exp,reps] applies the spinor replacements reps to the expression exp. The replacements need to be given in terms of the bare spinors SpinorUndotBare and SpinorDotBare, and can be any suitable linear combination of them. e replacements may also involve momentum matrices applied to the spinors, which are given for example as p.q.\[Lambda][p1]."
-CompleteMandelstam::usage="CompleteMandelstam[exp] turns products of the type \[LeftAngleBracket]ij\[RightAngleBracket][ji] into the Mandelstam invariant S[i,j] for massless particles i,j."
+ToMandelstam::usage="ToMandelstam[exp] converts products of brackets and scalar products of momenta into Mandelstam invariants where possible. So it turns \[LeftAngleBracket]ij\[RightAngleBracket][ji] and 2*mp[i,j] into the Mandelstam invariant S[i,j] for massless particles i,j."
 ToChain::usage="ToChain[exp] closes spinors of the |p\[RightAngleBracket][p| into momenta building chains of spinor products. So for example \[LeftAngleBracket]1 2\[RightAngleBracket][2 3] becomes \[LeftAngleBracket]1 2 3]. ToChain allows for the option ChainSelection."
 ChainSelection::usage="ChainSelection is an option for ToChain specifying which contraction to pick when multiple chains could be built out of the same brackets. Allowed values (given as strings) are ShortestChain, LongestChain ans MostTraces. For further information see the documentation."
 ChainToSpinor::usage="ChainToSpinor[exp] transforms chain objects in exp into products of spinor brackets."
@@ -39,6 +39,12 @@ ChainSort::usage="ChainSort[exp,ordering_List] sorts momenta appearing in chains
 ChainSimplify::usage="ChainSimplify[exp,Options] uses properties of the chains to simplify them, reducing them to products of chains where a given momentum appears at most once and scalar products. It allows for the options MomCon and ReduceComplete. Notice that in order for the simplifications to work best the momenta should be first declared through DeclareMom and massless momenta should be specified by DeclareMassless."
 MomCon::usage="MomCon is an option for ChainSimplify which allows to use momentum conservation to simplify the chains. It must be defined as a list of replacements."
 ReduceBySorting::usage="ReduceBySorting is an option for ChainSimplify, default is False. If set to True the function will order the momenta inside the chains. If set to a list of the ordering will follow the order in the list instead of canonical order."
+epsSH::usage="epsSH[p1,p2,p3,p4] represents the a Levi-Civita tensor contracted into the four momenta p1,p2,p3,p4. These apper when converting spinor chains into Dirac traces with ToTrace."
+TrG::usage="TrG[{p1,p2,...,pn}] computes the Dirac trace of the given list of slashed momenta."
+TrG5::usage="TrG5[{p1,p2,...,pn}] computes the Dirac trace of the given list of slashed momenta with a single \!\(\*SubscriptBox[\(\[Gamma]\), \(5\)]\) insertion at the first position."
+ToTrace::usage="ToTrace[exp] converts all closed chains of the form \[LeftAngleBracket]p|...|p] in exp into Dirac traces and evaluates them. It admits the Option EpsilonSimplify."
+EpsilonSimplify::usage="EpsilonSimplify is an option for ToTrace whose default value is the string None. If set to the string ReduceEven even powers of the Levi-Civita tensors appearing in the final result of the evaluation are converted into scalar products. If set to KillOdd the even powers are replaced with scalar products and the odd ones are discarded."
+CompleteDenominators::usage="CompleteDenominators[exp] completes all spinor products in the denominator of exp to Mandelstam invariants."
 
 
 (* ::Section:: *)
@@ -420,8 +426,14 @@ Throw[locexpSH];
 
 
 (* ::Subsection::Closed:: *)
+(*ToMandelstam*)
+
+
+(* ::Subsubsection::Closed:: *)
 (*CompleteMandelstam*)
 
+
+(*Auxiliary for ToMandelstam, converts the brackets*)
 
 CompleteMandelstam[test_]:=Block[{SpinorAngleBracket,SpinorSquareBracket,Power},
 (*Define a set of local properties for the angle and square brackets*)
@@ -439,7 +451,26 @@ Return[test];
 ];
 
 
-(* ::Subsection:: *)
+(* ::Subsubsection::Closed:: *)
+(*mpToMandelstam*)
+
+
+(*Auxiliary, converts scalar product into mandelstams*)
+
+mpToMandelstam[exp_]:=Block[{mp},
+mp[x_?MasslessQ,y_?MasslessQ]:=1/2*S[x,y];
+Return[exp];
+];
+
+
+(* ::Subsubsection::Closed:: *)
+(*ToMandelstam*)
+
+
+ToMandelstam= mpToMandelstam@CompleteMandelstam@#&;
+
+
+(* ::Subsection::Closed:: *)
 (*ToChain*)
 
 
@@ -844,7 +875,7 @@ Return[exp];
 ];
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*ChainSimplify*)
 
 
@@ -860,6 +891,17 @@ ChainSimplify[exp_,OptionsPattern[]]:=
 Module[{locexp},
 
 locexp=exp;
+
+(*Apply momentum conservation, if needed. This needs to be done outside the Block below because it requires linearity properties of chains to appropriately work.*)
+Which[
+	MatchQ[OptionValue[MomCon],{}],
+	Null,
+	AllTrue[OptionValue[MomCon],MatchQ[#,_Rule|_RuleDelayed]&],
+	locexp=ChainMomentumCon[locexp,OptionValue[MomCon]],
+	True,
+	Message[ChainSimplify::momcon]];
+
+
 (*Define local properties of chains for the simplification*)
 Block[{Chain},
 	Chain[type_,x_,{x_,y___},z_,type2_]:=0;
@@ -873,14 +915,6 @@ Block[{Chain},
  Chain[$angle,x_,{},y_,$angle]:=SpinorAngleBracket[x,y];
 Chain[$square,x_,{},y_,$square]:=SpinorSquareBracket[x,y];
 
-(*Apply momentum conservation, if needed*)
-Which[
-	MatchQ[OptionValue[MomCon],{}],
-	Null,
-	AllTrue[OptionValue[MomCon],MatchQ[#,_Rule|_RuleDelayed]&],
-	locexp=ChainMomentumCon[locexp,OptionValue[MomCon]],
-	True,
-	Message[ChainSimplify::momcon]];
 
 (*If[Length@OptionValue[MomCon]>0,
 locexp=ChainMomentumCon[locexp,OptionValue[MomCon]];
@@ -908,6 +942,89 @@ Return[locexp];
 ];
 
 
+(* ::Subsection::Closed:: *)
+(*epsSH*)
+
+
+(*Display*)
+epsSHBox[a_,b_,c_,d_]:=TemplateBox[{a,b,c,d},"epsSH",
+DisplayFunction->(RowBox[{"\[Epsilon]","[",#1,",",#2,",",#3,",",#4,"]"}]&),
+InterpretationFunction->(RowBox[{"epsSH","[",#1,",",#2,",",#3,",",#4,"]"}]&)
+];
+epsSH /: MakeBoxes[epsSH[a_,b_,c_,d_],StandardForm|TraditionalForm]:=epsSHBox[ToBoxes[a],ToBoxes[b],ToBoxes[c],ToBoxes[d]];
+
+(*Contraction with twice the same vector vanishes*)
+epsSH[x___,y_,z___,y_,k___]:=0;
+
+(*Antisymmetry*)
+epsSH[x___,y_,z_,k___]/;OrderedQ[{z,y}]:=-epsSH[x,z,y,k];
+
+(*Linearity with respect to declared momenta*)
+epsSH[x___,A_*y_String+z_,k___]:=A*epsSH[x,y,k]+epsSH[x,z,k];
+epsSH[x___,y_String+z_,k___]:=epsSH[x,y,k]+epsSH[x,z,k];
+epsSH[x___,Times[A_,y_String],z___]:=A*epsSH[x,y,z];
+
+
+(* ::Subsection::Closed:: *)
+(*TrG*)
+
+
+(*Trace of gamma matrices*)
+
+TrG[x_List]/;OddQ[Length[x]]:=0;
+TrG[{}]:=4;
+TrG[x_List]:=Sum[(-1)^i*mp[x[[1]],x[[i]]]TrG[Delete[x,{{1},{i}}]],{i,2,Length[x]}];
+
+
+(* ::Subsection::Closed:: *)
+(*TrG5*)
+
+
+TrG5[x_List]/;Length[x]<4:=0;
+TrG5[x_List]/;OddQ[Length[x]]:=0;
+TrG5[x_List]:=mp[x[[-3]],x[[-2]]]*TrG5[Delete[x,{{-3},{-2}}]]+mp[x[[-2]],x[[-1]]]*TrG5[x[[;;-3]]]-mp[x[[-3]],x[[-1]]]*TrG5[Delete[x,{{-3},{-1}}]]-I*Sum[(-1)^i*epsSH[x[[-i]],x[[-3]],x[[-2]],x[[-1]]]*TrG[Delete[x[[;;-4]],{-(i-3)}]],{i,4,Length[x]}];
+
+
+(* ::Subsection::Closed:: *)
+(*ToTrace*)
+
+
+Options[ToTrace]={EpsilonSimplify->"None"};
+
+ToTrace::epsilonsim="Unknown value for the option EpsilonSimplify, proceed ingnoring it.";
+
+ToTrace[exp_,OptionsPattern[]]:=Block[{Chain,epsSH},
+
+Chain[$angle,a_,b_List,a_,$square]:=(TrG[Join[{a},b]]-TrG5[Join[{a},b]])/2;
+Chain[$square,a_,b_List,a_,$angle]:=(TrG[Join[{a},b]]+TrG5[Join[{a},b]])/2;
+
+(*Depending on the option specification for KillEpsilon we remove the Levi-Civita tensors*)
+
+Switch[OptionValue[EpsilonSimplify],
+	"None",Return[exp],
+	"ReduceEven",
+	(*Define the contraction properties of even powers of Levi-Civita*)
+	epsSH /: Times[epsSH[a1_,b1_,c1_,d1_],epsSH[a2_,b2_,c2_,d2_]] := -(mp[a1,d2]*mp[a2,d1]*mp[b1,c2]*mp[b2,c1])+mp[a1,c2]*mp[a2,d1]*mp[b1,d2]*mp[b2,c1]+mp[a1,d2]*mp[a2,c1]*mp[b1,c2]*mp[b2,d1]-mp[a1,c2]*mp[a2,c1]*mp[b1,d2]*mp[b2,d1]+mp[a1,d2]*mp[a2,d1]*mp[b1,b2]*mp[c1,c2]-mp[a1,b2]*mp[a2,d1]*mp[b1,d2]*mp[c1,c2]-mp[a1,d2]*mp[a2,b1]*mp[b2,d1]*mp[c1,c2]+mp[a1,a2]*mp[b1,d2]*mp[b2,d1]*mp[c1,c2]-mp[a1,c2]*mp[a2,d1]*mp[b1,b2]*mp[c1,d2]+mp[a1,b2]*mp[a2,d1]*mp[b1,c2]*mp[c1,d2]+mp[a1,c2]*mp[a2,b1]*mp[b2,d1]*mp[c1,d2]-mp[a1,a2]*mp[b1,c2]*mp[b2,d1]*mp[c1,d2]-mp[a1,d2]*mp[a2,c1]*mp[b1,b2]*mp[c2,d1]+mp[a1,b2]*mp[a2,c1]*mp[b1,d2]*mp[c2,d1]+mp[a1,d2]*mp[a2,b1]*mp[b2,c1]*mp[c2,d1]-mp[a1,a2]*mp[b1,d2]*mp[b2,c1]*mp[c2,d1]-mp[a1,b2]*mp[a2,b1]*mp[c1,d2]*mp[c2,d1]+mp[a1,a2]*mp[b1,b2]*mp[c1,d2]*mp[c2,d1]+mp[a1,c2]*mp[a2,c1]*mp[b1,b2]*mp[d1,d2]-mp[a1,b2]*mp[a2,c1]*mp[b1,c2]*mp[d1,d2]-mp[a1,c2]*mp[a2,b1]*mp[b2,c1]*mp[d1,d2]+mp[a1,a2]*mp[b1,c2]*mp[b2,c1]*mp[d1,d2]+mp[a1,b2]*mp[a2,b1]*mp[c1,c2]*mp[d1,d2]-mp[a1,a2]*mp[b1,b2]*mp[c1,c2]*mp[d1,d2];
+	epsSH /: Power[epsSH[a1_,b1_,c1_,d1_],n_?EvenQ]:=(-(mp[a1,d1]^2*mp[b1,c1]^2)+2*mp[a1,c1]*mp[a1,d1]*mp[b1,c1]*mp[b1,d1]-mp[a1,c1]^2*mp[b1,d1]^2+mp[a1,d1]^2*mp[b1,b1]*mp[c1,c1]-2*mp[a1,b1]*mp[a1,d1]*mp[b1,d1]*mp[c1,c1]+mp[a1,a1]*mp[b1,d1]^2*mp[c1,c1]-2*mp[a1,c1]*mp[a1,d1]*mp[b1,b1]*mp[c1,d1]+2*mp[a1,b1]*mp[a1,d1]*mp[b1,c1]*mp[c1,d1]+2*mp[a1,b1]*mp[a1,c1]*mp[b1,d1]*mp[c1,d1]-2*mp[a1,a1]*mp[b1,c1]*mp[b1,d1]*mp[c1,d1]-mp[a1,b1]^2*mp[c1,d1]^2+mp[a1,a1]*mp[b1,b1]*mp[c1,d1]^2+mp[a1,c1]^2*mp[b1,b1]*mp[d1,d1]-2*mp[a1,b1]*mp[a1,c1]*mp[b1,c1]*mp[d1,d1]+mp[a1,a1]*mp[b1,c1]^2*mp[d1,d1]+mp[a1,b1]^2*mp[c1,c1]*mp[d1,d1]-mp[a1,a1]*mp[b1,b1]*mp[c1,c1]*mp[d1,d1])^(n/2);
+	Return[Expand[exp,epsSH]],
+	"KillOdd",
+	(*Define the contraction properties of even powers of Levi-Civita*)
+	epsSH /: Times[epsSH[a1_,b1_,c1_,d1_],epsSH[a2_,b2_,c2_,d2_]] := -(mp[a1,d2]*mp[a2,d1]*mp[b1,c2]*mp[b2,c1])+mp[a1,c2]*mp[a2,d1]*mp[b1,d2]*mp[b2,c1]+mp[a1,d2]*mp[a2,c1]*mp[b1,c2]*mp[b2,d1]-mp[a1,c2]*mp[a2,c1]*mp[b1,d2]*mp[b2,d1]+mp[a1,d2]*mp[a2,d1]*mp[b1,b2]*mp[c1,c2]-mp[a1,b2]*mp[a2,d1]*mp[b1,d2]*mp[c1,c2]-mp[a1,d2]*mp[a2,b1]*mp[b2,d1]*mp[c1,c2]+mp[a1,a2]*mp[b1,d2]*mp[b2,d1]*mp[c1,c2]-mp[a1,c2]*mp[a2,d1]*mp[b1,b2]*mp[c1,d2]+mp[a1,b2]*mp[a2,d1]*mp[b1,c2]*mp[c1,d2]+mp[a1,c2]*mp[a2,b1]*mp[b2,d1]*mp[c1,d2]-mp[a1,a2]*mp[b1,c2]*mp[b2,d1]*mp[c1,d2]-mp[a1,d2]*mp[a2,c1]*mp[b1,b2]*mp[c2,d1]+mp[a1,b2]*mp[a2,c1]*mp[b1,d2]*mp[c2,d1]+mp[a1,d2]*mp[a2,b1]*mp[b2,c1]*mp[c2,d1]-mp[a1,a2]*mp[b1,d2]*mp[b2,c1]*mp[c2,d1]-mp[a1,b2]*mp[a2,b1]*mp[c1,d2]*mp[c2,d1]+mp[a1,a2]*mp[b1,b2]*mp[c1,d2]*mp[c2,d1]+mp[a1,c2]*mp[a2,c1]*mp[b1,b2]*mp[d1,d2]-mp[a1,b2]*mp[a2,c1]*mp[b1,c2]*mp[d1,d2]-mp[a1,c2]*mp[a2,b1]*mp[b2,c1]*mp[d1,d2]+mp[a1,a2]*mp[b1,c2]*mp[b2,c1]*mp[d1,d2]+mp[a1,b2]*mp[a2,b1]*mp[c1,c2]*mp[d1,d2]-mp[a1,a2]*mp[b1,b2]*mp[c1,c2]*mp[d1,d2];
+	epsSH /: Power[epsSH[a1_,b1_,c1_,d1_],n_?EvenQ]:=(-(mp[a1,d1]^2*mp[b1,c1]^2)+2*mp[a1,c1]*mp[a1,d1]*mp[b1,c1]*mp[b1,d1]-mp[a1,c1]^2*mp[b1,d1]^2+mp[a1,d1]^2*mp[b1,b1]*mp[c1,c1]-2*mp[a1,b1]*mp[a1,d1]*mp[b1,d1]*mp[c1,c1]+mp[a1,a1]*mp[b1,d1]^2*mp[c1,c1]-2*mp[a1,c1]*mp[a1,d1]*mp[b1,b1]*mp[c1,d1]+2*mp[a1,b1]*mp[a1,d1]*mp[b1,c1]*mp[c1,d1]+2*mp[a1,b1]*mp[a1,c1]*mp[b1,d1]*mp[c1,d1]-2*mp[a1,a1]*mp[b1,c1]*mp[b1,d1]*mp[c1,d1]-mp[a1,b1]^2*mp[c1,d1]^2+mp[a1,a1]*mp[b1,b1]*mp[c1,d1]^2+mp[a1,c1]^2*mp[b1,b1]*mp[d1,d1]-2*mp[a1,b1]*mp[a1,c1]*mp[b1,c1]*mp[d1,d1]+mp[a1,a1]*mp[b1,c1]^2*mp[d1,d1]+mp[a1,b1]^2*mp[c1,c1]*mp[d1,d1]-mp[a1,a1]*mp[b1,b1]*mp[c1,c1]*mp[d1,d1])^(n/2);
+	Return[Expand[exp,epsSH]//.epsSH[x__]:>0],
+	_,Message[ToTrace::epsilonsim];
+];
+
+];
+
+
+(* ::Subsection::Closed:: *)
+(*CompleteDenominators*)
+
+
+CompleteDenominators[exp_]:=exp/.{Power[SpinorAngleBracket[a_,b_],n_?Negative]:>Power[S[a,b]/SpinorSquareBracket[b,a],n],Power[SpinorSquareBracket[a_,b_],n_?Negative]:>Power[S[a,b]/SpinorAngleBracket[b,a],n]};
+
+
 (* ::Section:: *)
 (*End of context*)
 
@@ -922,7 +1039,7 @@ Print["===============SpinorHelicity4D================"];
 Print["Author: Manuel Accettulli Huber (QMUL)"];
 Print["Please report any bug to:"];
 Print["m.accettullihuber@qmul.ac.uk"];
-Print["Version 1.0 , last update 03/08/2020"];
+Print["Version 1.0 , last update 06/04/2021"];
 Print[Hyperlink["Click here for full documentation","https://github.com/accettullihuber"]];
 Print["============================================="];
 
