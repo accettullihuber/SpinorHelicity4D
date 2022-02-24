@@ -57,6 +57,8 @@ Mass::usage="Mass[i] is the mass squared of the i'th particle."
 LeviCivitaSH::usage="LeviCivitaSH[a,b][type] represents the SU(2) Levi-Civita tensor which contracts the spinor indices. type takes values $up or $down."
 mp::usage="mp[p,q] represents the scalar product of p and q. mp is linear with respect to declared momenta."
 S::usage="S[p,...,q] is the Mandelstam invariant (p+...+q\!\(\*SuperscriptBox[\()\), \(2\)]\). S has attribute Orderless."
+DeltaSH::usage="DeltaSH[a,b], represented as \!\(\*TemplateBox[{\"a\", \"b\"},\n\"DeltaSH\",\nDisplayFunction->(SubsuperscriptBox[\"\[Delta]\", #2, #]& )]\) is the delta function for undotted indices."
+DeltaTildeSH::usage="DeltaTildeSH[a,b], represnted as \!\(\*TemplateBox[{\"a\", \"b\"},\n\"DeltaTildeSH\",\nDisplayFunction->(SubsuperscriptBox[OverscriptBox[\"\[Delta]\", \"~\"], #2, #]& )]\), is the delta function on the dotted spinors."
 NewProcess::usage="NewProcess[] clears all the invariants, the list of defined massless momenta as well as the declared momenta."
 
 
@@ -64,8 +66,8 @@ NewProcess::usage="NewProcess[] clears all the invariants, the list of defined m
 (*Actions on building blocks*)
 
 
-SetInvariants::usage="SetMp[list] takes as input a list of replacements of the type mp[x,y]->... and allows to fix given scalar products to a desired value."
-ClearInvariants::usage="ClearMp[mp[p1,p2],...] clears the definitions of the scalar products given as arguments. If ClearMp is called without arguments all the scalar products are cleared."
+SetInvariants::usage="SetInvariants[list] takes as input a list of replacements of the type mp[x,y]->... and allows to fix given scalar products to a desired value."
+ClearInvariants::usage="ClearInvariants[mp[p1,p2],...] clears the definitions of the scalar products given as arguments. If ClearMp is called without arguments all the scalar products are cleared."
 
 
 (* ::Section:: *)
@@ -117,7 +119,7 @@ UndeclareMom[]:=(MomList={};MomReps={};MomList);
 Protect[DeclareMom,UndeclareMom];
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*DeclareMassless and UndeclareMassless*)
 
 
@@ -655,6 +657,29 @@ mp[a_*momlabel_String,y_]:=a*mp[momlabel,y];
 
 (*Just implement the orderlessness of the Mandelstam invariants*)
 SetAttributes[S,Orderless];
+
+
+(* ::Subsection::Closed:: *)
+(*Spinor Deltas*)
+
+
+(*Definition of the deltas, two of them: one for lambda and one for the tilde, so we do not have to distinguish between the indices.*)
+
+(*Definition of the properties*)
+
+DeltaSH /: DeltaSH[a_,b_]*SpinorUndot[p_][type_][b_][Null]:=SpinorUndot[p][type][a][Null];
+DeltaSH /: DeltaSH[a_,b_]*SpinorUndot[p_][type_][Null][a_]:=SpinorUndot[p][type][Null][b];
+DeltaTildeSH /: DeltaTildeSH[a_,b_]*SpinorDot[p_][type_][b_][Null]:=SpinorDot[p][type][a][Null];
+DeltaTildeSH /: DeltaTildeSH[a_,b_]*SpinorDot[p_][type_][Null][a_]:=SpinorDot[p][type][Null][b];
+
+DeltaSHBox[x__]:=TemplateBox[{x},"DeltaSH",
+DisplayFunction->(SubsuperscriptBox["\[Delta]",#2,#1]&)
+];
+DeltaTildeSHBox[x__]:=TemplateBox[{x},"DeltaTildeSH",
+DisplayFunction->(SubsuperscriptBox[OverscriptBox["\[Delta]","~"],#2,#1]&)
+];
+DeltaSH /: MakeBoxes[DeltaSH[x_,y_],TraditionalForm|StandardForm]:=DeltaSHBox[ToBoxes[x],ToBoxes[y]];
+DeltaTildeSH /: MakeBoxes[DeltaTildeSH[x_,y_],TraditionalForm|StandardForm]:=DeltaTildeSHBox[ToBoxes[x],ToBoxes[y]];
 
 
 (* ::Section:: *)

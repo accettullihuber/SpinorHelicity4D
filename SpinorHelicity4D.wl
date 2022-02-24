@@ -45,6 +45,7 @@ TrG5::usage="TrG5[{p1,p2,...,pn}] computes the Dirac trace of the given list of 
 ToTrace::usage="ToTrace[exp] converts all closed chains of the form \[LeftAngleBracket]p|...|p] in exp into Dirac traces and evaluates them. It admits the Option EpsilonSimplify."
 EpsilonSimplify::usage="EpsilonSimplify is an option for ToTrace whose default value is the string None. If set to the string ReduceEven even powers of the Levi-Civita tensors appearing in the final result of the evaluation are converted into scalar products. If set to KillOdd the even powers are replaced with scalar products and the odd ones are discarded."
 CompleteDenominators::usage="CompleteDenominators[exp] completes all spinor products in the denominator of exp to Mandelstam invariants."
+SpinorDerivative::usage="SpinorDerivative[exp,der] performs the derivative of exp with respect to the spinor expression der. The input der can be either a single spinor in the form \!\(\*TemplateBox[{\"q\", \"a\"},\n\"SpinorLaUp\",\nDisplayFunction->(RowBox[{SuperscriptBox[\"\[Lambda]\", #2], \"[\", #, \"]\"}]& ),\nInterpretationFunction->(RowBox[{\"SpinorUndot\", \"[\", #, \"]\", \"[\", \"$lam\", \"]\", \"[\", #2, \"]\", \"[\", \"Null\", \"]\"}]& )]\), \!\(\*TemplateBox[{\"p\", \"a\"},\n\"SpinorLaDown\",\nDisplayFunction->(RowBox[{SubscriptBox[\"\[Lambda]\", #2], \"[\", #, \"]\"}]& ),\nInterpretationFunction->(RowBox[{\"SpinorUndot\", \"[\", #, \"]\", \"[\", \"$lam\", \"]\", \"[\", \"Null\", \"]\", \"[\", #2, \"]\"}]& )]\) (and equivalent for dotted), a product of such spinors or a list of them."
 
 
 (* ::Section:: *)
@@ -1023,6 +1024,291 @@ Switch[OptionValue[EpsilonSimplify],
 
 
 CompleteDenominators[exp_]:=exp/.{Power[SpinorAngleBracket[a_,b_],n_?Negative]:>Power[S[a,b]/SpinorSquareBracket[b,a],n],Power[SpinorSquareBracket[a_,b_],n_?Negative]:>Power[S[a,b]/SpinorAngleBracket[b,a],n]};
+
+
+(* ::Subsection:: *)
+(*SpinorDerivative*)
+
+
+(* ::Subsubsection:: *)
+(*Auxiliary functions*)
+
+
+(*The auxiliary functions actually perform the differentiation, there is four of them, one for each type of spinor.*)
+
+
+SpinorDerivativeDot[exp_,SpinorDot[p_][type_][a_][Null]]:=Module[{local,globaloptions},
+
+(*save options for D*)
+globaloptions=OptionValue[D,NonConstants];
+(*Set the options for SpinorSquareBracket and SpinorDot to be considered as functions of what we take the derivative*)
+SetOptions[D,NonConstants->{SpinorDot,SpinorSquareBracket}];
+
+(*Now Mathematica will apply differentiation but keeps the last step as it is since it does not know how to differentiate spinors*)
+local=D[exp,SpinorDot[p][type][a][Null]];
+
+(*Set global options for D back to what they where*)
+SetOptions[D,NonConstants->globaloptions];
+
+(*Now teach him how to derive spinors*)
+Block[{SpinorDot,SpinorSquareBracket},
+
+(*Define the derivatives. we also have to take into account the type of the objects in the bracket*)
+SpinorDot /: D[SpinorDot[p][type][a1_][Null],SpinorDot[p][type][a][Null],___]:=DeltaTildeSH[a1,a];
+SpinorDot /: D[SpinorDot[p][type][Null][a1_],SpinorDot[p][type][a][Null],___]:=LeviCivitaSH[a1,a][$down];
+
+(*The rules for the contracted spinors are more complicated, because we have to embed in the rules the distinction between reference and lamda spinor*)
+If[type===$lam,
+(*Make sure that derivative of references is zero. Alos take into account the special case [p,obar[p]]*)
+SpinorSquareBracket /: D[SpinorSquareBracket[p,obar[p]],SpinorDot[p][type][a][Null],___]:=-SpinorDot[p][$mu][Null][a];
+SpinorSquareBracket /: D[SpinorSquareBracket[obar[p],q_],SpinorDot[p][type][_][_],___]:=0;
+SpinorSquareBracket /:D[SpinorSquareBracket[q_,obar[p]],SpinorDot[p][type][_][_],___]:=0;
+
+(*Define the actual derivatives for the spinor*)
+SpinorSquareBracket /: D[SpinorSquareBracket[p,obar[q_]],SpinorDot[p][type][a][Null],___]:=-SpinorDot[q][$mu][Null][a];
+SpinorSquareBracket /: D[SpinorSquareBracket[p,q_],SpinorDot[p][type][a][Null],___]:=-SpinorDot[q][$lam][Null][a];
+SpinorSquareBracket /: D[SpinorSquareBracket[obar[q_],p],SpinorDot[p][type][a][Null],___]:=SpinorDot[q][$mu][Null][a];
+SpinorSquareBracket /: D[SpinorSquareBracket[q_,p],SpinorDot[p][type][a][Null],___]:=SpinorDot[q][$lam][Null][a];
+,
+(*The derivative is taken with respect to a reference spinor*)
+SpinorSquareBracket /: D[SpinorSquareBracket[obar[p],obar[q_]],SpinorDot[p][type][a][Null],___]:=-SpinorDot[q][$mu][Null][a];
+SpinorSquareBracket /: D[SpinorSquareBracket[obar[p],q_],SpinorDot[p][type][a][Null],___]:=-SpinorDot[q][$lam][Null][a];
+SpinorSquareBracket /: D[SpinorSquareBracket[obar[q_],obar[p]],SpinorDot[p][type][a][Null],___]:=SpinorDot[q][$mu][Null][a];
+SpinorSquareBracket /: D[SpinorSquareBracket[q_,obar[p]],SpinorDot[p][type][a][Null],___]:=SpinorDot[q][$lam][Null][a];
+];
+
+
+
+
+(*Take care of the fact that the SpinorDot and SpinorUndot are deep functions...*)
+Block[{D},
+D[SpinorDot[x_],y_,op___][a0_][a1_][a2_]:=D[SpinorDot[x][a0][a1][a2],y];
+D[SpinorSquareBracket[x__],y_,___]:=0;
+local=local;
+
+];
+
+];
+
+
+(*Return output*)
+local
+];
+
+
+SpinorDerivativeDot[exp_,SpinorDot[p_][type_][Null][a_]]:=Module[{local,globaloptions},
+
+(*save options for D*)
+globaloptions=OptionValue[D,NonConstants];
+(*Set the options for SpinorSquareBracket and SpinorDot to be considered as functions of what we take the derivative*)
+SetOptions[D,NonConstants->{SpinorDot,SpinorSquareBracket}];
+
+(*Now Mathematica will apply differentiation but keeps the last step as it is since it does not know how to differentiate spinors*)
+local=D[exp,SpinorDot[p][type][Null][a]];
+
+(*Set global options for D back to what they where*)
+SetOptions[D,NonConstants->globaloptions];
+
+(*Now teach him how to derive spinors*)
+Block[{SpinorDot,SpinorSquareBracket},
+
+(*Define the derivatives. we also have to take into account the type of the objects in the bracket*)
+SpinorDot /: D[SpinorDot[p][type][a1_][Null],SpinorDot[p][type][Null][a],___]:=LeviCivitaSH[a1,a][$up];
+SpinorDot /: D[SpinorDot[p][type][Null][a1_],SpinorDot[p][type][Null][a],___]:=DeltaTildeSH[a,a1];
+
+(*The rules for the contracted spinors are more complicated, because we have to embed in the rules the distinction between reference and lamda spinor*)
+If[type===$lam,
+(*Make sure that derivative of references is zero. Alos take into account the special case [p,obar[p]]*)
+SpinorSquareBracket /: D[SpinorSquareBracket[p,obar[p]],SpinorDot[p][type][Null][a],___]:=SpinorDot[p][$mu][a][Null];
+SpinorSquareBracket /: D[SpinorSquareBracket[obar[p],q_],SpinorDot[p][type][_][_],___]:=0;
+SpinorSquareBracket /:D[SpinorSquareBracket[q_,obar[p]],SpinorDot[p][type][_][_],___]:=0;
+
+(*Define the actual derivatives for the spinor*)
+SpinorSquareBracket /: D[SpinorSquareBracket[p,obar[q_]],SpinorDot[p][type][Null][a],___]:=SpinorDot[q][$mu][a][Null];
+SpinorSquareBracket /: D[SpinorSquareBracket[p,q_],SpinorDot[p][type][Null][a],___]:=SpinorDot[q][$lam][a][Null];
+SpinorSquareBracket /: D[SpinorSquareBracket[obar[q_],p],SpinorDot[p][type][Null][a],___]:=-SpinorDot[q][$mu][a][Null];
+SpinorSquareBracket /: D[SpinorSquareBracket[q_,p],SpinorDot[p][type][Null][a],___]:=-SpinorDot[q][$lam][a][Null];
+,
+(*The derivative is taken with respect to a reference spinor*)
+SpinorSquareBracket /: D[SpinorSquareBracket[obar[p],obar[q_]],SpinorDot[p][type][Null][a],___]:=SpinorDot[q][$mu][a][Null];
+SpinorSquareBracket /: D[SpinorSquareBracket[obar[p],q_],SpinorDot[p][type][Null][a],___]:=SpinorDot[q][$lam][a][Null];
+SpinorSquareBracket /: D[SpinorSquareBracket[obar[q_],obar[p]],SpinorDot[p][type][Null][a],___]:=-SpinorDot[q][$mu][a][Null];
+SpinorSquareBracket /: D[SpinorSquareBracket[q_,obar[p]],SpinorDot[p][type][Null][a],___]:=-SpinorDot[q][$lam][a][Null];
+];
+
+
+
+
+(*Take care of the fact that the SpinorDot and SpinorUndot are deep functions...*)
+Block[{D},
+D[SpinorDot[x_],y_,op___][a0_][a1_][a2_]:=D[SpinorDot[x][a0][a1][a2],y];
+D[SpinorSquareBracket[x__],y_,___]:=0;
+local=local;
+
+];
+
+];
+
+
+(*Return output*)
+local
+];
+
+
+SpinorDerivativeUndot[exp_,SpinorUndot[p_][type_][a_][Null]]:=Module[{local,globaloptions},
+
+(*save options for D*)
+globaloptions=OptionValue[D,NonConstants];
+(*Set the options for SpinorAngleBracket and SpinorUndot to be considered as functions of what we take the derivative*)
+SetOptions[D,NonConstants->{SpinorUndot,SpinorAngleBracket}];
+
+(*Now Mathematica will apply differentiation but keeps the last step as it is since it does not know how to differentiate spinors*)
+local=D[exp,SpinorUndot[p][type][a][Null]];
+
+(*Set global options for D back to what they where*)
+SetOptions[D,NonConstants->globaloptions];
+
+(*Now teach him how to derive spinors*)
+Block[{SpinorUndot,SpinorAngleBracket},
+
+(*Define the derivatives. we also have to take into account the type of the objects in the bracket*)
+SpinorUndot /: D[SpinorUndot[p][type][a1_][Null],SpinorUndot[p][type][a][Null],___]:=DeltaSH[a1,a];
+SpinorUndot /: D[SpinorUndot[p][type][Null][a1_],SpinorUndot[p][type][a][Null],___]:=LeviCivitaSH[a1,a][$down];
+
+(*The rules for the contracted spinors are more complicated, because we have to embed in the rules the distinction between reference and lamda spinor*)
+If[type===$lam,
+(*Make sure that derivative of references is zero. Alos take into account the special case [p,obar[p]]*)
+SpinorAngleBracket /: D[SpinorAngleBracket[p,obar[p]],SpinorUndot[p][type][a][Null],___]:=SpinorUndot[p][$mu][Null][a];
+SpinorAngleBracket /: D[SpinorAngleBracket[obar[p],q_],SpinorUndot[p][type][_][_],___]:=0;
+SpinorAngleBracket /:D[SpinorAngleBracket[q_,obar[p]],SpinorUndot[p][type][_][_],___]:=0;
+
+(*Define the actual derivatives for the spinor*)
+SpinorAngleBracket /: D[SpinorAngleBracket[p,obar[q_]],SpinorUndot[p][type][a][Null],___]:=SpinorUndot[q][$mu][Null][a];
+SpinorAngleBracket /: D[SpinorAngleBracket[p,q_],SpinorUndot[p][type][a][Null],___]:=SpinorUndot[q][$lam][Null][a];
+SpinorAngleBracket /: D[SpinorAngleBracket[obar[q_],p],SpinorUndot[p][type][a][Null],___]:=-SpinorUndot[q][$mu][Null][a];
+SpinorAngleBracket /: D[SpinorAngleBracket[q_,p],SpinorUndot[p][type][a][Null],___]:=-SpinorUndot[q][$lam][Null][a];
+,
+(*The derivative is taken with respect to a reference spinor*)
+SpinorAngleBracket /: D[SpinorAngleBracket[obar[p],obar[q_]],SpinorUndot[p][type][a][Null],___]:=SpinorUndot[q][$mu][Null][a];
+SpinorAngleBracket /: D[SpinorAngleBracket[obar[p],q_],SpinorUndot[p][type][a][Null],___]:=SpinorUndot[q][$lam][Null][a];
+SpinorAngleBracket /: D[SpinorAngleBracket[obar[q_],obar[p]],SpinorUndot[p][type][a][Null],___]:=-SpinorUndot[q][$mu][Null][a];
+SpinorAngleBracket /: D[SpinorAngleBracket[q_,obar[p]],SpinorUndot[p][type][a][Null],___]:=-SpinorUndot[q][$lam][Null][a];
+];
+
+
+
+
+(*Take care of the fact that the SpinorUndot and SpinorUndot are deep functions...*)
+Block[{D},
+D[SpinorUndot[x_],y_,op___][a0_][a1_][a2_]:=D[SpinorUndot[x][a0][a1][a2],y];
+D[SpinorAngleBracket[x__],y_,___]:=0;
+local=local;
+
+];
+
+];
+
+
+(*Return output*)
+local
+];
+
+
+SpinorDerivativeUndot[exp_,SpinorUndot[p_][type_][Null][a_]]:=Module[{local,globaloptions},
+
+(*save options for D*)
+globaloptions=OptionValue[D,NonConstants];
+(*Set the options for SpinorAngleBracket and SpinorUndot to be considered as functions of what we take the derivative*)
+SetOptions[D,NonConstants->{SpinorUndot,SpinorAngleBracket}];
+
+(*Now Mathematica will apply differentiation but keeps the last step as it is since it does not know how to differentiate spinors*)
+local=D[exp,SpinorUndot[p][type][Null][a]];
+
+(*Set global options for D back to what they where*)
+SetOptions[D,NonConstants->globaloptions];
+
+(*Now teach him how to derive spinors*)
+Block[{SpinorUndot,SpinorAngleBracket},
+
+(*Define the derivatives. we also have to take into account the type of the objects in the bracket*)
+SpinorUndot /: D[SpinorUndot[p][type][a1_][Null],SpinorUndot[p][type][Null][a],___]:=LeviCivitaSH[a1,a][$up];
+SpinorUndot /: D[SpinorUndot[p][type][Null][a1_],SpinorUndot[p][type][Null][a],___]:=DeltaSH[a,a1];
+
+(*The rules for the contracted spinors are more complicated, because we have to embed in the rules the distinction between reference and lamda spinor*)
+If[type===$lam,
+(*Make sure that derivative of references is zero. Alos take into account the special case [p,obar[p]]*)
+SpinorAngleBracket /: D[SpinorAngleBracket[p,obar[p]],SpinorUndot[p][type][Null][a],___]:=-SpinorUndot[p][$mu][a][Null];
+SpinorAngleBracket /: D[SpinorAngleBracket[obar[p],q_],SpinorUndot[p][type][_][_],___]:=0;
+SpinorAngleBracket /:D[SpinorAngleBracket[q_,obar[p]],SpinorUndot[p][type][_][_],___]:=0;
+
+(*Define the actual derivatives for the spinor*)
+SpinorAngleBracket /: D[SpinorAngleBracket[p,obar[q_]],SpinorUndot[p][type][Null][a],___]:=-SpinorUndot[q][$mu][a][Null];
+SpinorAngleBracket /: D[SpinorAngleBracket[p,q_],SpinorUndot[p][type][Null][a],___]:=-SpinorUndot[q][$lam][a][Null];
+SpinorAngleBracket /: D[SpinorAngleBracket[obar[q_],p],SpinorUndot[p][type][Null][a],___]:=SpinorUndot[q][$mu][a][Null];
+SpinorAngleBracket /: D[SpinorAngleBracket[q_,p],SpinorUndot[p][type][Null][a],___]:=SpinorUndot[q][$lam][a][Null];
+,
+(*The derivative is taken with respect to a reference spinor*)
+SpinorAngleBracket /: D[SpinorAngleBracket[obar[p],obar[q_]],SpinorUndot[p][type][Null][a],___]:=-SpinorUndot[q][$mu][a][Null];
+SpinorAngleBracket /: D[SpinorAngleBracket[obar[p],q_],SpinorUndot[p][type][Null][a],___]:=-SpinorUndot[q][$lam][a][Null];
+SpinorAngleBracket /: D[SpinorAngleBracket[obar[q_],obar[p]],SpinorUndot[p][type][Null][a],___]:=SpinorUndot[q][$mu][a][Null];
+SpinorAngleBracket /: D[SpinorAngleBracket[q_,obar[p]],SpinorUndot[p][type][Null][a],___]:=SpinorUndot[q][$lam][a][Null];
+];
+
+
+
+
+(*Take care of the fact that the SpinorUndot and SpinorUndot are deep functions...*)
+Block[{D},
+D[SpinorUndot[x_],y_,op___][a0_][a1_][a2_]:=D[SpinorUndot[x][a0][a1][a2],y];
+D[SpinorAngleBracket[x__],y_,___]:=0;
+local=local;
+
+];
+
+];
+
+
+(*Return output*)
+local
+];
+
+
+(* ::Subsubsection:: *)
+(*The function for the user*)
+
+
+SpinorDerivative::inv="Cannot differentiate with respect to the given quantity. Please check your input or the documentation for help.";
+
+
+SpinorDerivative[exp_,labs_]:=Module[{loclabs,ang,squ},
+
+(*If it is derivative with respect to asingle spinor return output directly, else make into a list and apply spinor derivative multiple times*)
+Switch[Head[labs],
+SpinorDot[_][_][_],
+Return[SpinorDerivativeDot[exp,labs]],
+SpinorUndot[_][_][_],
+Return[SpinorDerivativeUndot[exp,labs]],
+List,
+loclabs=labs;
+,
+Times,
+If[AllTrue[labs,(MatchQ[Head[#],SpinorBuildingBlocks`SpinorDot[_][_][_]]||MatchQ[Head[#],SpinorBuildingBlocks`SpinorUndot[_][_][_]]&)],
+loclabs=List@@labs,
+Message[SpinorDerivative::inv];
+Return[$Failed]
+];
+];
+
+(*Now we send each input to the appropriate differentiation function*)
+loclabs=GatherBy[loclabs,#[[0,0,0,0]]&];
+ang=SelectFirst[loclabs,#[[1,0,0,0,0]]===SpinorBuildingBlocks`SpinorUndot&,{}];
+squ=SelectFirst[loclabs,#[[1,0,0,0,0]]===SpinorBuildingBlocks`SpinorDot&,{}];
+
+(*Now apply the proper derivatives in sequence*)
+loclabs=Fold[SpinorDerivativeUndot,exp,ang];
+Fold[SpinorDerivativeDot,loclabs,squ]
+
+];
 
 
 (* ::Section:: *)
