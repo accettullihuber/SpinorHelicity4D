@@ -1,0 +1,812 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 12.0' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       158,          7]
+NotebookDataLength[     34476,        804]
+NotebookOptionsPosition[     33339,        777]
+NotebookOutlinePosition[     33753,        793]
+CellTagsIndexPosition[     33710,        790]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+Cell[BoxData[
+ RowBox[{"<<", "LiteRedExtension`"}]], "Input",
+ CellChangeTimes->{{3.7978482941026373`*^9, 
+  3.797848303271718*^9}},ExpressionUUID->"6f3a4929-e152-42d6-bd51-\
+761e07126c49"],
+
+Cell[CellGroupData[{
+
+Cell["Old version", "Subsection",
+ CellChangeTimes->{{3.7978483081027203`*^9, 
+  3.7978483109776487`*^9}},ExpressionUUID->"a98e58be-ecad-459e-a05c-\
+73a54dd2e1c7"],
+
+Cell[BoxData[
+ RowBox[{"(*", 
+  RowBox[{
+  "This", " ", "version", " ", "only", " ", "looks", " ", "at", " ", "the", 
+   " ", "denominators", " ", "but", " ", "actually", " ", "you", " ", "also", 
+   " ", "need", " ", "to", " ", "look", " ", "at", " ", "the", " ", 
+   RowBox[{"numerators", "!"}]}], "*)"}]], "Input",
+ CellChangeTimes->{{3.7978485001486588`*^9, 
+  3.797848525413041*^9}},ExpressionUUID->"96c8dff2-ba96-41a5-b519-\
+66161eacfbb1"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{
+   RowBox[{"BasisSelect", "[", 
+    RowBox[{"exp_", ",", "loopmom_", ",", "Basis_List"}], "]"}], ":=", 
+   RowBox[{"Catch", "[", 
+    RowBox[{
+     RowBox[{"Module", "[", 
+      RowBox[{
+       RowBox[{"{", 
+        RowBox[{
+        "denlist", ",", "ones", ",", "test", ",", "locexp", ",", 
+         "reductionlist", ",", "locden", ",", "loopm", ",", "count", ",", 
+         "len", ",", "out", ",", "basis"}], "}"}], ",", "\n", "\n", 
+       RowBox[{"(*", 
+        RowBox[{
+        "For", " ", "every", " ", "basis", " ", "we", " ", "need", " ", "to", 
+         " ", "extract", " ", "the", " ", 
+         RowBox[{"denominators", "."}]}], "*)"}], "\n", 
+       RowBox[{"(*", 
+        RowBox[{
+         RowBox[{
+         "We", " ", "need", " ", "also", " ", "to", " ", "make", " ", "sure", 
+          " ", "that", " ", "the", " ", "given", " ", "loop", " ", "momentum",
+           " ", "is", " ", "actually", " ", "such"}], ",", " ", 
+         RowBox[{
+         "so", " ", "we", " ", "check", " ", "that", " ", "every", " ", 
+          "denominator", " ", "in", " ", "every", " ", "basis", " ", 
+          "contains", " ", "at", " ", "least", " ", "one", " ", "loop", " ", 
+          "momentum"}]}], "*)"}], "\n", 
+       RowBox[{
+        RowBox[{"loopm", "=", 
+         RowBox[{"Flatten", "[", 
+          RowBox[{"{", "loopmom", "}"}], "]"}]}], ";", "\n", 
+        RowBox[{"basis", "=", 
+         RowBox[{"Flatten", "[", 
+          RowBox[{"{", "Basis", "}"}], "]"}]}], ";", "\n", 
+        RowBox[{"len", "=", 
+         RowBox[{"Length", "[", "basis", "]"}]}], ";", "\n", 
+        RowBox[{"Do", "[", "\n", 
+         RowBox[{
+          RowBox[{
+           RowBox[{
+            RowBox[{"denlist", "[", "i", "]"}], "=", 
+            RowBox[{"Ds", "[", "i", "]"}]}], ";", "\n", 
+           RowBox[{"(*", 
+            RowBox[{
+            "Take", " ", "also", " ", "into", " ", "account", " ", "that", 
+             " ", "one", " ", "of", " ", "the", " ", "given", " ", "basis", 
+             " ", "might", " ", "not", " ", "have", " ", "been", " ", 
+             RowBox[{"defined", "."}]}], "*)"}], "\n", 
+           RowBox[{"If", "[", 
+            RowBox[{
+             RowBox[{"!", 
+              RowBox[{"TrueQ", "[", 
+               RowBox[{
+                RowBox[{"Head", "[", 
+                 RowBox[{"denlist", "[", "i", "]"}], "]"}], "==", "List"}], 
+               "]"}]}], ",", 
+             RowBox[{"Throw", "[", 
+              RowBox[{"\"\<The basis \>\"", "<>", 
+               RowBox[{"ToString", "[", "i", "]"}], "<>", 
+               "\"\< is not known. Please load it or define it.\>\""}], 
+              "]"}]}], "]"}], ";", "\n", 
+           RowBox[{"If", "[", 
+            RowBox[{
+             RowBox[{"!", 
+              RowBox[{"AllTrue", "[", 
+               RowBox[{
+                RowBox[{"Table", "[", 
+                 RowBox[{
+                  RowBox[{"AnyTrue", "[", 
+                   RowBox[{"loopm", ",", 
+                    RowBox[{
+                    RowBox[{"!", 
+                    RowBox[{"FreeQ", "[", 
+                    RowBox[{"k", ",", "#"}], "]"}]}], "&"}]}], "]"}], ",", 
+                  RowBox[{"{", 
+                   RowBox[{"k", ",", 
+                    RowBox[{"denlist", "[", "i", "]"}]}], "}"}]}], "]"}], ",",
+                 "TrueQ"}], "]"}]}], ",", "\n", 
+             RowBox[{
+              RowBox[{"Throw", "[", 
+               RowBox[{
+               "\"\<At least one of the given loop momenta is not an actual \
+loop momentum, or the basis \>\"", "<>", 
+                RowBox[{"ToString", "[", "i", "]"}], "<>", 
+                "\"\< is ill-defined.\>\""}], "]"}], ";"}]}], "\n", "]"}], 
+           ";"}], "\n", ",", 
+          RowBox[{"{", 
+           RowBox[{"i", ",", "basis"}], "}"}]}], "]"}], ";", "\n", "\n", 
+        RowBox[{"(*", 
+         RowBox[{
+          RowBox[{
+          "Now", " ", "we", " ", "have", " ", "a", " ", "list", " ", "of", 
+           " ", "lists", " ", "of", " ", "the", " ", "denominators", " ", 
+           "of", " ", "each", " ", 
+           RowBox[{"basis", ".", " ", "At"}], " ", "this", " ", "point", " ", 
+           "we", " ", "take", " ", "exp"}], ",", " ", 
+          RowBox[{
+          "expand", " ", "it", " ", "and", " ", "transform", " ", "it", " ", 
+           "in", " ", "a", " ", 
+           RowBox[{"list", "."}]}]}], "*)"}], "\n", 
+        RowBox[{"locexp", "=", 
+         RowBox[{"exp", "//", "Expand"}]}], ";", "\n", 
+        RowBox[{"Which", "[", 
+         RowBox[{
+          RowBox[{"TrueQ", "[", 
+           RowBox[{
+            RowBox[{"Head", "[", "locexp", "]"}], "==", "Plus"}], "]"}], ",", 
+          "\n", 
+          RowBox[{"locexp", "=", 
+           RowBox[{"List", "@@", "locexp"}]}], ",", "\n", 
+          RowBox[{"TrueQ", "[", 
+           RowBox[{
+            RowBox[{"Head", "[", "locexp", "]"}], "==", "Times"}], "]"}], ",",
+           "\n", 
+          RowBox[{
+           RowBox[{"locexp", "=", 
+            RowBox[{"{", "locexp", "}"}]}], ";"}]}], "\n", "]"}], ";", "\n", 
+        "\n", 
+        RowBox[{"(*", 
+         RowBox[{
+         "Set", " ", "up", " ", "the", " ", "list", " ", "which", " ", "will",
+           " ", "contain", " ", "the", " ", "adeenda", " ", "to", " ", "be", 
+          " ", "reduced", " ", "in", " ", "the", " ", "specific", " ", 
+          RowBox[{"basis", ".", " ", 
+           RowBox[{"reductionlist", "[", 
+            RowBox[{"len", "+", "1"}], "]"}]}], " ", "is", " ", "going", " ", 
+          "to", " ", "be", " ", "the", " ", "list", " ", "of", " ", "the", 
+          " ", "elements", " ", "which", " ", "lack", " ", "a", " ", 
+          "correct", " ", "basis", " ", "to", " ", "be", " ", "reduced", " ", 
+          "and", " ", 
+          RowBox[{"reductionlist", "[", 
+           RowBox[{"len", "+", "2"}], "]"}], " ", "those", " ", "which", " ", 
+          "do", " ", "not", " ", "need", " ", "any", " ", "reduction", " ", 
+          "since", " ", "they", " ", "are", " ", "constants"}], "*)"}], "\n", 
+        RowBox[{"Do", "[", 
+         RowBox[{
+          RowBox[{
+           RowBox[{
+            RowBox[{"reductionlist", "[", "k", "]"}], "=", 
+            RowBox[{"{", "}"}]}], ";"}], "\n", ",", 
+          RowBox[{"{", 
+           RowBox[{"k", ",", 
+            RowBox[{"len", "+", "2"}]}], "}"}]}], "]"}], ";", "\n", "\n", 
+        RowBox[{"(*", 
+         RowBox[{
+         "Now", " ", "assign", " ", "each", " ", "addendum", " ", "to", " ", 
+          "the", " ", "correct", " ", "basis"}], "*)"}], "\n", 
+        RowBox[{"Do", "[", "\n", 
+         RowBox[{"(*", 
+          RowBox[{
+          "Create", " ", "list", " ", "of", " ", "denomiators", " ", "of", 
+           " ", "the", " ", "given", " ", "term"}], "*)"}], "\n", 
+         RowBox[{
+          RowBox[{
+           RowBox[{"locden", "=", 
+            RowBox[{"Denominator", "[", 
+             RowBox[{"locexp", "[", 
+              RowBox[{"[", "i", "]"}], "]"}], "]"}]}], ";", "\n", 
+           RowBox[{"If", "[", 
+            RowBox[{
+             RowBox[{
+              RowBox[{"Length", "[", "locden", "]"}], ">", "1"}], ",", "\n", 
+             RowBox[{"locden", "=", 
+              RowBox[{"List", "@@", "locden"}]}], ",", "\n", 
+             RowBox[{
+              RowBox[{"locden", "=", 
+               RowBox[{"{", "locden", "}"}]}], ";"}]}], "\n", "]"}], ";", 
+           "\n", 
+           RowBox[{"(*", 
+            RowBox[{
+            "We", " ", "also", " ", "need", " ", "to", " ", "remove", " ", 
+             "everything", " ", "which", " ", "is", " ", "not", " ", "a", " ",
+              "denominator"}], "*)"}], "\n", 
+           RowBox[{"Do", "[", 
+            RowBox[{
+             RowBox[{"locden", "=", 
+              RowBox[{"DeleteCases", "[", 
+               RowBox[{"locden", ",", 
+                RowBox[{"y_", "/;", 
+                 RowBox[{"FreeQ", "[", 
+                  RowBox[{"y", ",", "k"}], "]"}]}]}], "]"}]}], ",", 
+             RowBox[{"{", 
+              RowBox[{"k", ",", "loopm"}], "}"}]}], "]"}], ";", "\n", 
+           RowBox[{"(*", 
+            RowBox[{
+            "We", " ", "need", " ", "to", " ", "take", " ", "into", " ", 
+             "account", " ", "the", " ", "fact", " ", "that", " ", 
+             "denominators", " ", "may", " ", "appear", " ", "with", " ", 
+             "higher", " ", "powers", " ", "than", " ", "1.", " ", "Since", 
+             " ", "here", " ", "we", " ", "are", " ", "just", " ", 
+             "selecting", " ", "the", " ", "basis", " ", "we", " ", "can", 
+             " ", "simply", " ", "remove", " ", "the", " ", "powers"}], 
+            "*)"}], "\n", 
+           RowBox[{"locden", "=", 
+            RowBox[{
+             RowBox[{
+              RowBox[{"Replace", "[", 
+               RowBox[{"#", ",", 
+                RowBox[{
+                 RowBox[{"Power", "[", 
+                  RowBox[{"x_", ",", "n_"}], "]"}], ":>", "x"}]}], "]"}], 
+              "&"}], "/@", "locden"}]}], ";", "\n", 
+           RowBox[{"(*", 
+            RowBox[{
+            "If", " ", "the", " ", "set", " ", "of", " ", "denominators", " ",
+              "is", " ", "empty", " ", "and", " ", "there", " ", "are", " ", 
+             "no", " ", "loop", " ", "momenta", " ", "in", " ", "the", " ", 
+             "numerator", " ", "no", " ", "reduction", " ", "is", " ", 
+             RowBox[{"needed", ".", " ", "If"}], " ", "there", " ", "are", 
+             " ", "loop", " ", "momenta", " ", "but", " ", "no", " ", 
+             "denominators", " ", "something", " ", "is", " ", 
+             RowBox[{"wrong", ".", " ", "Else"}], " ", "we", " ", 
+             RowBox[{"proceed", "."}]}], "*)"}], "\n", 
+           RowBox[{"Which", "[", 
+            RowBox[{
+             RowBox[{
+              RowBox[{
+               RowBox[{"Length", "[", "locden", "]"}], "==", "0"}], "&&", 
+              RowBox[{"AllTrue", "[", 
+               RowBox[{"loopm", ",", 
+                RowBox[{
+                 RowBox[{"FreeQ", "[", 
+                  RowBox[{
+                   RowBox[{"locexp", "[", 
+                    RowBox[{"[", "i", "]"}], "]"}], ",", "#"}], "]"}], 
+                 "&"}]}], "]"}]}], ",", "\n", 
+             RowBox[{
+              RowBox[{"reductionlist", "[", 
+               RowBox[{"len", "+", "2"}], "]"}], "=", 
+              RowBox[{"Join", "[", 
+               RowBox[{
+                RowBox[{"reductionlist", "[", 
+                 RowBox[{"len", "+", "2"}], "]"}], ",", 
+                RowBox[{"{", 
+                 RowBox[{"locexp", "[", 
+                  RowBox[{"[", "i", "]"}], "]"}], "}"}]}], "]"}]}], ",", "\n", 
+             RowBox[{
+              RowBox[{"Length", "[", "locden", "]"}], "==", "0"}], ",", "\n", 
+             RowBox[{
+              RowBox[{"reductionlist", "[", 
+               RowBox[{"len", "+", "1"}], "]"}], "=", 
+              RowBox[{"Join", "[", 
+               RowBox[{
+                RowBox[{"reductionlist", "[", 
+                 RowBox[{"len", "+", "1"}], "]"}], ",", 
+                RowBox[{"{", 
+                 RowBox[{"locexp", "[", 
+                  RowBox[{"[", "i", "]"}], "]"}], "}"}]}], "]"}]}], "\n", ",",
+              "\n", "True", ",", "\n", 
+             RowBox[{"(*", 
+              RowBox[{"Assign", " ", "element", " ", "to", " ", "basis"}], 
+              "*)"}], "\n", 
+             RowBox[{
+              RowBox[{"test", "=", "False"}], ";", "\n", 
+              RowBox[{"count", "=", "0"}], ";", "\n", 
+              RowBox[{"While", "[", 
+               RowBox[{
+                RowBox[{"TrueQ", "[", 
+                 RowBox[{"test", "==", "False"}], "]"}], ",", "\n", 
+                RowBox[{
+                 RowBox[{"test", "=", 
+                  RowBox[{"BasisQ", "[", 
+                   RowBox[{
+                    RowBox[{"denlist", "[", 
+                    RowBox[{"basis", "[", 
+                    RowBox[{"[", 
+                    RowBox[{"++", "count"}], "]"}], "]"}], "]"}], ",", 
+                    "locden"}], "]"}]}], ";", "\n", 
+                 RowBox[{"(*", 
+                  RowBox[{
+                   RowBox[{"Print", "[", 
+                    RowBox[{"{", 
+                    RowBox[{"i", ",", "test", ",", "count"}], "}"}], "]"}], 
+                   ";"}], "*)"}], "\n", 
+                 RowBox[{"(*", 
+                  RowBox[{
+                   RowBox[{
+                   "It", " ", "might", " ", "happen", " ", "that", " ", "the",
+                     " ", "required", " ", "basis", " ", "is", " ", "not", 
+                    " ", "in", " ", "the", " ", "list"}], ",", " ", 
+                   RowBox[{
+                   "so", " ", "we", " ", "take", " ", "this", " ", "option", 
+                    " ", "into", " ", "account"}]}], "*)"}], "\n", 
+                 RowBox[{"If", "[", 
+                  RowBox[{
+                   RowBox[{"count", ">=", "len"}], ",", "\n", 
+                   RowBox[{
+                    RowBox[{"Break", "[", "]"}], ";"}]}], "\n", "]"}], 
+                 ";"}]}], "\n", "]"}], ";", "\n", 
+              RowBox[{"If", "[", 
+               RowBox[{
+                RowBox[{"test", "==", "True"}], ",", "\n", 
+                RowBox[{
+                 RowBox[{"reductionlist", "[", "count", "]"}], "=", 
+                 RowBox[{"Join", "[", 
+                  RowBox[{
+                   RowBox[{"reductionlist", "[", "count", "]"}], ",", 
+                   RowBox[{"{", 
+                    RowBox[{"locexp", "[", 
+                    RowBox[{"[", "i", "]"}], "]"}], "}"}]}], "]"}]}], ",", 
+                "\n", 
+                RowBox[{
+                 RowBox[{"reductionlist", "[", 
+                  RowBox[{"len", "+", "1"}], "]"}], "=", 
+                 RowBox[{"Join", "[", 
+                  RowBox[{
+                   RowBox[{"reductionlist", "[", 
+                    RowBox[{"len", "+", "1"}], "]"}], ",", 
+                   RowBox[{"{", 
+                    RowBox[{"locexp", "[", 
+                    RowBox[{"[", "i", "]"}], "]"}], "}"}]}], "]"}]}]}], "\n", 
+               "]"}], ";"}]}], "\n", "]"}], ";"}], "\n", ",", 
+          RowBox[{"{", 
+           RowBox[{"i", ",", 
+            RowBox[{"Length", "[", "locexp", "]"}]}], "}"}]}], "\n", "]"}], 
+        ";", "\n", "\n", 
+        RowBox[{"out", "=", 
+         RowBox[{"Join", "[", 
+          RowBox[{
+           RowBox[{"Table", "[", 
+            RowBox[{
+             RowBox[{"{", 
+              RowBox[{
+               RowBox[{"basis", "[", 
+                RowBox[{"[", "i", "]"}], "]"}], ",", 
+               RowBox[{"Plus", "@@", 
+                RowBox[{"reductionlist", "[", "i", "]"}]}]}], "}"}], ",", 
+             RowBox[{"{", 
+              RowBox[{"i", ",", "len"}], "}"}]}], "]"}], ",", 
+           RowBox[{"{", 
+            RowBox[{"{", 
+             RowBox[{"\"\<No reduction required:\>\"", ",", 
+              RowBox[{"Plus", "@@", 
+               RowBox[{"reductionlist", "[", 
+                RowBox[{"len", "+", "2"}], "]"}]}]}], "}"}], "}"}], ",", 
+           RowBox[{"{", 
+            RowBox[{"{", 
+             RowBox[{"\"\<No available basis:\>\"", ",", 
+              RowBox[{"Plus", "@@", 
+               RowBox[{"reductionlist", "[", 
+                RowBox[{"len", "+", "1"}], "]"}]}]}], "}"}], "}"}]}], "]"}]}],
+         ";", "\n", "\n", 
+        RowBox[{"Return", "[", "out", "]"}], ";"}]}], "\n", "]"}], ";"}], 
+    "\n", "]"}]}], ";"}]], "Code",ExpressionUUID->"5f95051e-a63a-4f67-92e4-\
+1f89c9230737"]
+}, Closed]],
+
+Cell[CellGroupData[{
+
+Cell["New version", "Section",
+ CellChangeTimes->{{3.797848316626652*^9, 
+  3.797848318381084*^9}},ExpressionUUID->"941003d8-642d-427a-b3d6-\
+b6a19de2e49b"],
+
+Cell[CellGroupData[{
+
+Cell["Test, failed", "Subsection",
+ CellChangeTimes->{{3.7978488651514435`*^9, 
+  3.7978488680030603`*^9}},ExpressionUUID->"a3de95e6-df8b-4d3c-bb80-\
+77bddd4e7b14"],
+
+Cell[BoxData[
+ RowBox[{"(*", 
+  RowBox[{
+   RowBox[{
+   "Since", " ", "you", " ", "want", " ", "also", " ", "to", " ", "consider", 
+    " ", "numerators", " ", "you", " ", "need", " ", "first", " ", "to", " ", 
+    "transform", " ", "all", " ", "scalar", " ", "products", " ", "into", " ",
+     "propagators"}], ",", " ", 
+   RowBox[{
+   "else", " ", "you", " ", "are", " ", "not", " ", "able", " ", "to", " ", 
+    "assign", " ", "things", " ", "to", " ", "the", " ", "basis"}]}], 
+  "*)"}]], "Input",
+ CellChangeTimes->{{3.797848869383506*^9, 
+  3.797848920650983*^9}},ExpressionUUID->"7bfd2139-e50e-4174-817c-\
+73c7b1109831"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{
+   RowBox[{"BasisSelect2", "[", 
+    RowBox[{"exp_", ",", "loopmom_", ",", "Basis_List"}], "]"}], ":=", 
+   RowBox[{"Catch", "[", 
+    RowBox[{
+     RowBox[{"Module", "[", 
+      RowBox[{
+       RowBox[{"{", 
+        RowBox[{
+        "denlist", ",", "ones", ",", "test", ",", "locexp", ",", 
+         "reductionlist", ",", "locden", ",", "loopm", ",", "count", ",", 
+         "len", ",", "out", ",", "basis"}], "}"}], ",", "\n", "\n", 
+       RowBox[{"(*", 
+        RowBox[{
+        "For", " ", "every", " ", "basis", " ", "we", " ", "need", " ", "to", 
+         " ", "extract", " ", "the", " ", 
+         RowBox[{"denominators", "."}]}], "*)"}], "\n", 
+       RowBox[{"(*", 
+        RowBox[{
+         RowBox[{
+         "We", " ", "need", " ", "also", " ", "to", " ", "make", " ", "sure", 
+          " ", "that", " ", "the", " ", "given", " ", "loop", " ", "momentum",
+           " ", "is", " ", "actually", " ", "such"}], ",", " ", 
+         RowBox[{
+         "so", " ", "we", " ", "check", " ", "that", " ", "every", " ", 
+          "denominator", " ", "in", " ", "every", " ", "basis", " ", 
+          "contains", " ", "at", " ", "least", " ", "one", " ", "loop", " ", 
+          "momentum"}]}], "*)"}], "\n", 
+       RowBox[{
+        RowBox[{"loopm", "=", 
+         RowBox[{"Flatten", "[", 
+          RowBox[{"{", "loopmom", "}"}], "]"}]}], ";", "\n", 
+        RowBox[{"basis", "=", 
+         RowBox[{"Flatten", "[", 
+          RowBox[{"{", "Basis", "}"}], "]"}]}], ";", "\n", 
+        RowBox[{"len", "=", 
+         RowBox[{"Length", "[", "basis", "]"}]}], ";", "\n", 
+        RowBox[{"Do", "[", "\n", 
+         RowBox[{
+          RowBox[{
+           RowBox[{
+            RowBox[{"denlist", "[", "i", "]"}], "=", 
+            RowBox[{"Ds", "[", "i", "]"}]}], ";", "\n", 
+           RowBox[{"(*", 
+            RowBox[{
+            "Take", " ", "also", " ", "into", " ", "account", " ", "that", 
+             " ", "one", " ", "of", " ", "the", " ", "given", " ", "basis", 
+             " ", "might", " ", "not", " ", "have", " ", "been", " ", 
+             RowBox[{"defined", "."}]}], "*)"}], "\n", 
+           RowBox[{"If", "[", 
+            RowBox[{
+             RowBox[{"!", 
+              RowBox[{"TrueQ", "[", 
+               RowBox[{
+                RowBox[{"Head", "[", 
+                 RowBox[{"denlist", "[", "i", "]"}], "]"}], "==", "List"}], 
+               "]"}]}], ",", 
+             RowBox[{"Throw", "[", 
+              RowBox[{"\"\<The basis \>\"", "<>", 
+               RowBox[{"ToString", "[", "i", "]"}], "<>", 
+               "\"\< is not known. Please load it or define it.\>\""}], 
+              "]"}]}], "]"}], ";", "\n", 
+           RowBox[{"If", "[", 
+            RowBox[{
+             RowBox[{"!", 
+              RowBox[{"AllTrue", "[", 
+               RowBox[{
+                RowBox[{"Table", "[", 
+                 RowBox[{
+                  RowBox[{"AnyTrue", "[", 
+                   RowBox[{"loopm", ",", 
+                    RowBox[{
+                    RowBox[{"!", 
+                    RowBox[{"FreeQ", "[", 
+                    RowBox[{"k", ",", "#"}], "]"}]}], "&"}]}], "]"}], ",", 
+                  RowBox[{"{", 
+                   RowBox[{"k", ",", 
+                    RowBox[{"denlist", "[", "i", "]"}]}], "}"}]}], "]"}], ",",
+                 "TrueQ"}], "]"}]}], ",", "\n", 
+             RowBox[{
+              RowBox[{"Throw", "[", 
+               RowBox[{
+               "\"\<At least one of the given loop momenta is not an actual \
+loop momentum, or the basis \>\"", "<>", 
+                RowBox[{"ToString", "[", "i", "]"}], "<>", 
+                "\"\< is ill-defined.\>\""}], "]"}], ";"}]}], "\n", "]"}], 
+           ";"}], "\n", ",", 
+          RowBox[{"{", 
+           RowBox[{"i", ",", "basis"}], "}"}]}], "]"}], ";", "\n", "\n", 
+        RowBox[{"(*", 
+         RowBox[{
+          RowBox[{
+          "Now", " ", "we", " ", "have", " ", "a", " ", "list", " ", "of", 
+           " ", "lists", " ", "of", " ", "the", " ", "denominators", " ", 
+           "of", " ", "each", " ", 
+           RowBox[{"basis", ".", " ", "At"}], " ", "this", " ", "point", " ", 
+           "we", " ", "take", " ", "exp"}], ",", " ", 
+          RowBox[{
+          "expand", " ", "it", " ", "and", " ", "transform", " ", "it", " ", 
+           "in", " ", "a", " ", 
+           RowBox[{"list", "."}]}]}], "*)"}], "\n", 
+        RowBox[{"locexp", "=", 
+         RowBox[{"exp", "//", "Expand"}]}], ";", "\n", 
+        RowBox[{"Which", "[", 
+         RowBox[{
+          RowBox[{"TrueQ", "[", 
+           RowBox[{
+            RowBox[{"Head", "[", "locexp", "]"}], "==", "Plus"}], "]"}], ",", 
+          "\n", 
+          RowBox[{"locexp", "=", 
+           RowBox[{"List", "@@", "locexp"}]}], ",", "\n", 
+          RowBox[{"TrueQ", "[", 
+           RowBox[{
+            RowBox[{"Head", "[", "locexp", "]"}], "==", "Times"}], "]"}], ",",
+           "\n", 
+          RowBox[{
+           RowBox[{"locexp", "=", 
+            RowBox[{"{", "locexp", "}"}]}], ";"}]}], "\n", "]"}], ";", "\n", 
+        "\n", 
+        RowBox[{"(*", 
+         RowBox[{
+         "Set", " ", "up", " ", "the", " ", "list", " ", "which", " ", "will",
+           " ", "contain", " ", "the", " ", "addenda", " ", "to", " ", "be", 
+          " ", "reduced", " ", "in", " ", "the", " ", "specific", " ", 
+          RowBox[{"basis", ".", " ", 
+           RowBox[{"reductionlist", "[", 
+            RowBox[{"len", "+", "1"}], "]"}]}], " ", "is", " ", "going", " ", 
+          "to", " ", "be", " ", "the", " ", "list", " ", "of", " ", "the", 
+          " ", "elements", " ", "which", " ", "lack", " ", "a", " ", 
+          "correct", " ", "basis", " ", "to", " ", "be", " ", "reduced", " ", 
+          "and", " ", 
+          RowBox[{"reductionlist", "[", 
+           RowBox[{"len", "+", "2"}], "]"}], " ", "those", " ", "which", " ", 
+          "do", " ", "not", " ", "need", " ", "any", " ", "reduction", " ", 
+          "since", " ", "they", " ", "are", " ", "constants"}], "*)"}], "\n", 
+        RowBox[{"Do", "[", 
+         RowBox[{
+          RowBox[{
+           RowBox[{
+            RowBox[{"reductionlist", "[", "k", "]"}], "=", 
+            RowBox[{"{", "}"}]}], ";"}], "\n", ",", 
+          RowBox[{"{", 
+           RowBox[{"k", ",", 
+            RowBox[{"len", "+", "2"}]}], "}"}]}], "]"}], ";", "\n", "\n", 
+        RowBox[{"(*", 
+         RowBox[{
+         "Now", " ", "assign", " ", "each", " ", "addendum", " ", "to", " ", 
+          "the", " ", "correct", " ", "basis"}], "*)"}], "\n", 
+        RowBox[{"Do", "[", "\n", 
+         RowBox[{"(*", 
+          RowBox[{
+          "Create", " ", "list", " ", "of", " ", "denomiators", " ", "of", 
+           " ", "the", " ", "given", " ", "term"}], "*)"}], "\n", 
+         RowBox[{
+          RowBox[{
+           RowBox[{"locden", "=", 
+            RowBox[{"Denominator", "[", 
+             RowBox[{"locexp", "[", 
+              RowBox[{"[", "i", "]"}], "]"}], "]"}]}], ";", "\n", 
+           RowBox[{"If", "[", 
+            RowBox[{
+             RowBox[{
+              RowBox[{"Length", "[", "locden", "]"}], ">", "1"}], ",", "\n", 
+             RowBox[{"locden", "=", 
+              RowBox[{"List", "@@", "locden"}]}], ",", "\n", 
+             RowBox[{
+              RowBox[{"locden", "=", 
+               RowBox[{"{", "locden", "}"}]}], ";"}]}], "\n", "]"}], ";", 
+           "\n", 
+           RowBox[{"(*", 
+            RowBox[{
+            "We", " ", "also", " ", "need", " ", "to", " ", "remove", " ", 
+             "everything", " ", "which", " ", "is", " ", "not", " ", "a", " ",
+              "denominator"}], "*)"}], "\n", 
+           RowBox[{"Do", "[", 
+            RowBox[{
+             RowBox[{"locden", "=", 
+              RowBox[{"DeleteCases", "[", 
+               RowBox[{"locden", ",", 
+                RowBox[{"y_", "/;", 
+                 RowBox[{"FreeQ", "[", 
+                  RowBox[{"y", ",", "k"}], "]"}]}]}], "]"}]}], ",", 
+             RowBox[{"{", 
+              RowBox[{"k", ",", "loopm"}], "}"}]}], "]"}], ";", "\n", 
+           RowBox[{"(*", 
+            RowBox[{
+            "We", " ", "need", " ", "to", " ", "take", " ", "into", " ", 
+             "account", " ", "the", " ", "fact", " ", "that", " ", 
+             "denominators", " ", "may", " ", "appear", " ", "with", " ", 
+             "higher", " ", "powers", " ", "than", " ", "1.", " ", "Since", 
+             " ", "here", " ", "we", " ", "are", " ", "just", " ", 
+             "selecting", " ", "the", " ", "basis", " ", "we", " ", "can", 
+             " ", "simply", " ", "remove", " ", "the", " ", "powers"}], 
+            "*)"}], "\n", 
+           RowBox[{"locden", "=", 
+            RowBox[{
+             RowBox[{
+              RowBox[{"Replace", "[", 
+               RowBox[{"#", ",", 
+                RowBox[{
+                 RowBox[{"Power", "[", 
+                  RowBox[{"x_", ",", "n_"}], "]"}], ":>", "x"}]}], "]"}], 
+              "&"}], "/@", "locden"}]}], ";", "\n", 
+           RowBox[{"(*", 
+            RowBox[{
+            "If", " ", "the", " ", "set", " ", "of", " ", "denominators", " ",
+              "is", " ", "empty", " ", "and", " ", "there", " ", "are", " ", 
+             "no", " ", "loop", " ", "momenta", " ", "in", " ", "the", " ", 
+             "numerator", " ", "no", " ", "reduction", " ", "is", " ", 
+             RowBox[{"needed", ".", " ", "If"}], " ", "there", " ", "are", 
+             " ", "loop", " ", "momenta", " ", "but", " ", "no", " ", 
+             "denominators", " ", "something", " ", "is", " ", 
+             RowBox[{"wrong", ".", " ", "Else"}], " ", "we", " ", 
+             RowBox[{"proceed", "."}]}], "*)"}], "\n", 
+           RowBox[{"Which", "[", 
+            RowBox[{
+             RowBox[{
+              RowBox[{
+               RowBox[{"Length", "[", "locden", "]"}], "==", "0"}], "&&", 
+              RowBox[{"AllTrue", "[", 
+               RowBox[{"loopm", ",", 
+                RowBox[{
+                 RowBox[{"FreeQ", "[", 
+                  RowBox[{
+                   RowBox[{"locexp", "[", 
+                    RowBox[{"[", "i", "]"}], "]"}], ",", "#"}], "]"}], 
+                 "&"}]}], "]"}]}], ",", "\n", 
+             RowBox[{
+              RowBox[{"reductionlist", "[", 
+               RowBox[{"len", "+", "2"}], "]"}], "=", 
+              RowBox[{"Join", "[", 
+               RowBox[{
+                RowBox[{"reductionlist", "[", 
+                 RowBox[{"len", "+", "2"}], "]"}], ",", 
+                RowBox[{"{", 
+                 RowBox[{"locexp", "[", 
+                  RowBox[{"[", "i", "]"}], "]"}], "}"}]}], "]"}]}], ",", "\n", 
+             RowBox[{
+              RowBox[{"Length", "[", "locden", "]"}], "==", "0"}], ",", "\n", 
+             RowBox[{
+              RowBox[{"reductionlist", "[", 
+               RowBox[{"len", "+", "1"}], "]"}], "=", 
+              RowBox[{"Join", "[", 
+               RowBox[{
+                RowBox[{"reductionlist", "[", 
+                 RowBox[{"len", "+", "1"}], "]"}], ",", 
+                RowBox[{"{", 
+                 RowBox[{"locexp", "[", 
+                  RowBox[{"[", "i", "]"}], "]"}], "}"}]}], "]"}]}], "\n", ",",
+              "\n", "True", ",", "\n", 
+             RowBox[{"(*", 
+              RowBox[{"Assign", " ", "element", " ", "to", " ", "basis"}], 
+              "*)"}], "\n", 
+             RowBox[{
+              RowBox[{"test", "=", "False"}], ";", "\n", 
+              RowBox[{"count", "=", "0"}], ";", "\n", 
+              RowBox[{"While", "[", 
+               RowBox[{
+                RowBox[{"TrueQ", "[", 
+                 RowBox[{"test", "==", "False"}], "]"}], ",", "\n", 
+                RowBox[{
+                 RowBox[{"test", "=", 
+                  RowBox[{"BasisQ", "[", 
+                   RowBox[{
+                    RowBox[{"denlist", "[", 
+                    RowBox[{"basis", "[", 
+                    RowBox[{"[", 
+                    RowBox[{"++", "count"}], "]"}], "]"}], "]"}], ",", 
+                    "locden"}], "]"}]}], ";", "\n", 
+                 RowBox[{"(*", 
+                  RowBox[{
+                   RowBox[{"Print", "[", 
+                    RowBox[{"{", 
+                    RowBox[{"i", ",", "test", ",", "count"}], "}"}], "]"}], 
+                   ";"}], "*)"}], "\n", 
+                 RowBox[{"(*", 
+                  RowBox[{
+                   RowBox[{
+                   "It", " ", "might", " ", "happen", " ", "that", " ", "the",
+                     " ", "required", " ", "basis", " ", "is", " ", "not", 
+                    " ", "in", " ", "the", " ", "list"}], ",", " ", 
+                   RowBox[{
+                   "so", " ", "we", " ", "take", " ", "this", " ", "option", 
+                    " ", "into", " ", "account"}]}], "*)"}], "\n", 
+                 RowBox[{"If", "[", 
+                  RowBox[{
+                   RowBox[{"count", ">=", "len"}], ",", "\n", 
+                   RowBox[{
+                    RowBox[{"Break", "[", "]"}], ";"}]}], "\n", "]"}], 
+                 ";"}]}], "\n", "]"}], ";", "\n", 
+              RowBox[{"If", "[", 
+               RowBox[{
+                RowBox[{"test", "==", "True"}], ",", "\n", 
+                RowBox[{
+                 RowBox[{"reductionlist", "[", "count", "]"}], "=", 
+                 RowBox[{"Join", "[", 
+                  RowBox[{
+                   RowBox[{"reductionlist", "[", "count", "]"}], ",", 
+                   RowBox[{"{", 
+                    RowBox[{"locexp", "[", 
+                    RowBox[{"[", "i", "]"}], "]"}], "}"}]}], "]"}]}], ",", 
+                "\n", 
+                RowBox[{
+                 RowBox[{"reductionlist", "[", 
+                  RowBox[{"len", "+", "1"}], "]"}], "=", 
+                 RowBox[{"Join", "[", 
+                  RowBox[{
+                   RowBox[{"reductionlist", "[", 
+                    RowBox[{"len", "+", "1"}], "]"}], ",", 
+                   RowBox[{"{", 
+                    RowBox[{"locexp", "[", 
+                    RowBox[{"[", "i", "]"}], "]"}], "}"}]}], "]"}]}]}], "\n", 
+               "]"}], ";"}]}], "\n", "]"}], ";"}], "\n", ",", 
+          RowBox[{"{", 
+           RowBox[{"i", ",", 
+            RowBox[{"Length", "[", "locexp", "]"}]}], "}"}]}], "\n", "]"}], 
+        ";", "\n", "\n", 
+        RowBox[{"out", "=", 
+         RowBox[{"Join", "[", 
+          RowBox[{
+           RowBox[{"Table", "[", 
+            RowBox[{
+             RowBox[{"{", 
+              RowBox[{
+               RowBox[{"basis", "[", 
+                RowBox[{"[", "i", "]"}], "]"}], ",", 
+               RowBox[{"Plus", "@@", 
+                RowBox[{"reductionlist", "[", "i", "]"}]}]}], "}"}], ",", 
+             RowBox[{"{", 
+              RowBox[{"i", ",", "len"}], "}"}]}], "]"}], ",", 
+           RowBox[{"{", 
+            RowBox[{"{", 
+             RowBox[{"\"\<No reduction required:\>\"", ",", 
+              RowBox[{"Plus", "@@", 
+               RowBox[{"reductionlist", "[", 
+                RowBox[{"len", "+", "2"}], "]"}]}]}], "}"}], "}"}], ",", 
+           RowBox[{"{", 
+            RowBox[{"{", 
+             RowBox[{"\"\<No available basis:\>\"", ",", 
+              RowBox[{"Plus", "@@", 
+               RowBox[{"reductionlist", "[", 
+                RowBox[{"len", "+", "1"}], "]"}]}]}], "}"}], "}"}]}], "]"}]}],
+         ";", "\n", "\n", 
+        RowBox[{"Return", "[", "out", "]"}], ";"}]}], "\n", "]"}], ";"}], 
+    "\n", "]"}]}], ";"}]], "Input",
+ CellChangeTimes->{{3.7978483402379704`*^9, 
+  3.797848363635654*^9}},ExpressionUUID->"0ced3455-3c8c-46f4-82a5-\
+8ff5d403a3d5"]
+}, Open  ]]
+}, Open  ]]
+},
+WindowSize->{775, 657},
+WindowMargins->{{191, Automatic}, {37, Automatic}},
+FrontEndVersion->"12.0 for Microsoft Windows (64-bit) (April 8, 2019)",
+StyleDefinitions->FrontEnd`FileName[{"Wolfram"}, "Demonstration.nb", 
+  CharacterEncoding -> "UTF-8"]
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[558, 20, 189, 4, 25, "Input",ExpressionUUID->"6f3a4929-e152-42d6-bd51-761e07126c49"],
+Cell[CellGroupData[{
+Cell[772, 28, 163, 3, 53, "Subsection",ExpressionUUID->"a98e58be-ecad-459e-a05c-73a54dd2e1c7"],
+Cell[938, 33, 445, 9, 48, "Input",ExpressionUUID->"96c8dff2-ba96-41a5-b519-66161eacfbb1"],
+Cell[1386, 44, 15418, 347, 1311, "Code",ExpressionUUID->"5f95051e-a63a-4f67-92e4-1f89c9230737"]
+}, Closed]],
+Cell[CellGroupData[{
+Cell[16841, 396, 156, 3, 53, "Section",ExpressionUUID->"941003d8-642d-427a-b3d6-b6a19de2e49b"],
+Cell[CellGroupData[{
+Cell[17022, 403, 164, 3, 53, "Subsection",ExpressionUUID->"a3de95e6-df8b-4d3c-bb80-77bddd4e7b14"],
+Cell[17189, 408, 628, 14, 62, "Input",ExpressionUUID->"7bfd2139-e50e-4174-817c-73c7b1109831"],
+Cell[17820, 424, 15491, 349, 1556, "Input",ExpressionUUID->"0ced3455-3c8c-46f4-82a5-8ff5d403a3d5"]
+}, Open  ]]
+}, Open  ]]
+}
+]
+*)
+

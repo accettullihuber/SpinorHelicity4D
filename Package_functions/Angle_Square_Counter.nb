@@ -1,0 +1,131 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 12.1' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       158,          7]
+NotebookDataLength[      4271,        123]
+NotebookOptionsPosition[      3657,        104]
+NotebookOutlinePosition[      4097,        121]
+CellTagsIndexPosition[      4054,        118]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{
+   RowBox[{"AngleCount", "[", 
+    RowBox[{"exp_", ",", "label_"}], "]"}], ":=", 
+   RowBox[{
+    RowBox[{"Cases", "[", 
+     RowBox[{
+      RowBox[{"{", "exp", "}"}], ",", 
+      RowBox[{
+       RowBox[{"HoldPattern", "[", 
+        RowBox[{
+         RowBox[{"SpinorAngleBracket", "[", 
+          RowBox[{"label", ",", "_"}], "]"}], "|", 
+         RowBox[{"SpinorAngleBracket", "[", 
+          RowBox[{"_", ",", "label"}], "]"}]}], "]"}], "\[RuleDelayed]", 
+       "1"}], ",", "\[Infinity]"}], "]"}], "//", "Length"}]}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"SquareCount", "[", 
+    RowBox[{"exp_", ",", "label_"}], "]"}], ":=", 
+   RowBox[{
+    RowBox[{"Cases", "[", 
+     RowBox[{
+      RowBox[{"{", "exp", "}"}], ",", 
+      RowBox[{
+       RowBox[{"HoldPattern", "[", 
+        RowBox[{
+         RowBox[{"SpinorSquareBracket", "[", 
+          RowBox[{"label", ",", "_"}], "]"}], "|", 
+         RowBox[{"SpinorSquareBracket", "[", 
+          RowBox[{"_", ",", "label"}], "]"}]}], "]"}], "\[RuleDelayed]", 
+       "1"}], ",", "\[Infinity]"}], "]"}], "//", "Length"}]}], 
+  ";"}]}], "Input",ExpressionUUID->"33404083-ecd8-463f-b914-72a48eb9043b"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"SquareCount", "[", 
+  RowBox[{
+   RowBox[{
+    TemplateBox[{"1", "2"},
+     "SpinorAngleBracket",
+     DisplayFunction->(RowBox[{"\[LeftAngleBracket]", 
+        RowBox[{#, "\[MediumSpace]", #2}], "\[RightAngleBracket]"}]& ),
+     InterpretationFunction->(RowBox[{"Spinoranglebracket", "[", 
+        RowBox[{#, ",", #2}], "]"}]& )], 
+    TemplateBox[{"2", "3"},
+     "SpinorAngleBracket",
+     DisplayFunction->(RowBox[{"\[LeftAngleBracket]", 
+        RowBox[{#, "\[MediumSpace]", #2}], "\[RightAngleBracket]"}]& ),
+     InterpretationFunction->(RowBox[{"Spinoranglebracket", "[", 
+        RowBox[{#, ",", #2}], "]"}]& )], 
+    TemplateBox[{"1", "3"},
+     "SpinorSquareBracket",
+     DisplayFunction->(RowBox[{"[", 
+        RowBox[{#, "\[MediumSpace]", #2}], "]"}]& ),
+     InterpretationFunction->(RowBox[{"Spinorsquarebracket", "[", 
+        RowBox[{#, ",", #2}], "]"}]& )], 
+    TemplateBox[{"2", "4"},
+     "SpinorAngleBracket",
+     DisplayFunction->(RowBox[{"\[LeftAngleBracket]", 
+        RowBox[{#, "\[MediumSpace]", #2}], "\[RightAngleBracket]"}]& ),
+     InterpretationFunction->(RowBox[{"Spinoranglebracket", "[", 
+        RowBox[{#, ",", #2}], "]"}]& )]}], ",", "3"}], "]"}]], "Input",
+ CellLabel->"In[1]:=",ExpressionUUID->"a36615b7-ca92-4e3b-8257-6714f87d558e"],
+
+Cell[BoxData[
+ RowBox[{"SquareCount", "[", 
+  RowBox[{
+   RowBox[{
+    RowBox[{"Spinoranglebracket", "[", 
+     RowBox[{"1", ",", "2"}], "]"}], " ", 
+    RowBox[{"Spinoranglebracket", "[", 
+     RowBox[{"2", ",", "3"}], "]"}], " ", 
+    RowBox[{"Spinoranglebracket", "[", 
+     RowBox[{"2", ",", "4"}], "]"}], " ", 
+    RowBox[{"Spinorsquarebracket", "[", 
+     RowBox[{"1", ",", "3"}], "]"}]}], ",", "3"}], "]"}]], "Output",
+ CellChangeTimes->{3.803811824260333*^9},
+ CellLabel->"Out[1]=",ExpressionUUID->"73dff61c-4957-4c4e-af69-d88398e0bb79"]
+}, Open  ]]
+},
+WindowSize->{733.8, 512.4},
+WindowMargins->{{Automatic, 157.80000000000007`}, {
+  24.600000000000023`, Automatic}},
+FrontEndVersion->"12.1 for Microsoft Windows (64-bit) (March 18, 2020)",
+StyleDefinitions->"Default.nb",
+ExpressionUUID->"714c5823-304e-41a7-9fed-2b6df3560e20"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[558, 20, 1211, 34, 165, "Input",ExpressionUUID->"33404083-ecd8-463f-b914-72a48eb9043b"],
+Cell[CellGroupData[{
+Cell[1794, 58, 1299, 28, 28, "Input",ExpressionUUID->"a36615b7-ca92-4e3b-8257-6714f87d558e"],
+Cell[3096, 88, 545, 13, 52, "Output",ExpressionUUID->"73dff61c-4957-4c4e-af69-d88398e0bb79"]
+}, Open  ]]
+}
+]
+*)
+

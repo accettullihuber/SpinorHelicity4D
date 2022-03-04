@@ -1,0 +1,786 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 12.3' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       158,          7]
+NotebookDataLength[     34051,        778]
+NotebookOptionsPosition[     20645,        509]
+NotebookOutlinePosition[     33690,        774]
+CellTagsIndexPosition[     33647,        771]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+Cell[BoxData[
+ RowBox[{"(*", 
+  RowBox[{
+  "Masslist", " ", "is", " ", "a", " ", "list", " ", "of", " ", "integers", 
+   " ", "teling", " ", "us", " ", "how", " ", "many", " ", "masses", " ", 
+   "should", " ", "have", " ", "the", " ", "same", " ", "value"}], 
+  "*)"}]], "Input",
+ CellChangeTimes->{{3.841494364317011*^9, 
+  3.8414943867936583`*^9}},ExpressionUUID->"b803ddc9-408e-41cd-b197-\
+972d4f7bf704"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"GenerateKinematics", "::", "impossiblemasses"}], "=", 
+  "\"\<Impossible mass assignments, option SameMasses ignored.\>\""}]], \
+"Input",
+ CellChangeTimes->{{3.841494493430189*^9, 
+  3.841494563651553*^9}},ExpressionUUID->"baf7de61-fb07-4fa6-b718-\
+a5f3c6e70397"],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{
+   RowBox[{"Options", "[", "GenerateKinematics", "]"}], "=", 
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{"RationalKinematics", "->", "True"}], ",", 
+     RowBox[{"ParameterRange", "->", "1000"}], ",", 
+     RowBox[{"Parametric", "->", "False"}], ",", 
+     RowBox[{"ParameterName", "->", "$par"}], ",", 
+     RowBox[{"SameMasses", "->", 
+      RowBox[{"{", "}"}]}]}], "}"}]}], "\n"}], "\n", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"GenerateKinematics", "[", 
+    RowBox[{"total_Integer", ",", "fourD_Integer", ",", 
+     RowBox[{"OptionsPattern", "[", "]"}]}], "]"}], ":=", 
+   RowBox[{"Catch", "[", 
+    RowBox[{
+     RowBox[{"Module", "[", 
+      RowBox[{
+       RowBox[{"{", 
+        RowBox[{
+        "\[Xi]", ",", "\[Eta]", ",", "\[Xi]t", ",", "\[Eta]t", ",", "n", ",", 
+         "random", ",", "system", ",", "sol", ",", "par", ",", "count", ",", 
+         "out", ",", "localmasses"}], "}"}], ",", "\n", "\[IndentingNewLine]", 
+       RowBox[{"(*", 
+        RowBox[{
+        "First", " ", "we", " ", "check", " ", "that", " ", "the", " ", 
+         "number", " ", "of", " ", "fixed", " ", "masses", " ", "is", " ", 
+         "acceptable"}], " ", "*)"}], "\n", 
+       RowBox[{
+        RowBox[{"If", "[", 
+         RowBox[{
+          RowBox[{
+           RowBox[{"Total", "@", 
+            RowBox[{"OptionValue", "[", "SameMasses", "]"}]}], ">", "total"}],
+           ",", "\[IndentingNewLine]", 
+          RowBox[{
+           RowBox[{"Message", "[", 
+            RowBox[{"GenerateKinematics", "::", "impossiblemasses"}], "]"}], 
+           ";", "\[IndentingNewLine]", 
+           RowBox[{"Throw", "[", "\"\<Failed\>\"", "]"}], ";"}]}], "\n", 
+         "]"}], ";", "\[IndentingNewLine]", "\n", 
+        RowBox[{"n", "=", "total"}], ";", "\n", "\n", 
+        RowBox[{"(*", 
+         RowBox[{
+          RowBox[{
+          "Next", " ", "fix", " ", "the", " ", "components", " ", "of", " ", 
+           "the", " ", "four"}], "-", 
+          RowBox[{"dimensional", " ", "massless", " ", "spinors"}]}], "*)"}], 
+        "\n", 
+        RowBox[{"Do", "[", "\n", 
+         RowBox[{
+          RowBox[{
+           RowBox[{
+            RowBox[{"\[Xi]", "[", 
+             RowBox[{"i", "+", "n"}], "]"}], "=", "0"}], ";", "\n", 
+           RowBox[{
+            RowBox[{"\[Eta]", "[", 
+             RowBox[{"i", "+", "n"}], "]"}], "=", "0"}], ";", "\n", 
+           RowBox[{
+            RowBox[{"\[Eta]t", "[", 
+             RowBox[{"i", "+", "n"}], "]"}], "=", 
+            RowBox[{
+             RowBox[{"\[Eta]t", "[", "i", "]"}], "*", 
+             RowBox[{
+              RowBox[{"\[Xi]t", "[", 
+               RowBox[{"i", "+", "n"}], "]"}], "/", 
+              RowBox[{"\[Xi]t", "[", "i", "]"}]}]}]}], ";"}], "\n", ",", 
+          RowBox[{"{", 
+           RowBox[{"i", ",", 
+            RowBox[{"n", "-", "fourD", "+", "1"}], ",", "n"}], "}"}]}], "]"}],
+         ";", "\n", "\n", 
+        RowBox[{"(*", 
+         RowBox[{
+         "Based", " ", "on", " ", "the", " ", "options", " ", "given", " ", 
+          "assign", " ", "rational", " ", "rather", " ", "than", " ", "real", 
+          " ", "kinematics", " ", "and", " ", "the", " ", "range", " ", "of", 
+          " ", "the", " ", "interval", " ", "over", " ", "which", " ", "to", 
+          " ", "generate", " ", "it"}], "*)"}], "\n", 
+        RowBox[{"If", "[", 
+         RowBox[{
+          RowBox[{"TrueQ", "[", 
+           RowBox[{"OptionValue", "[", "RationalKinematics", "]"}], "]"}], 
+          ",", "\n", 
+          RowBox[{"random", ":=", 
+           RowBox[{"RandomInteger", "[", 
+            RowBox[{"OptionValue", "[", "ParameterRange", "]"}], "]"}]}], ",",
+           "\n", 
+          RowBox[{
+           RowBox[{"random", ":=", 
+            RowBox[{"RandomReal", "[", 
+             RowBox[{"OptionValue", "[", "ParameterRange", "]"}], "]"}]}], 
+           ";"}]}], "\n", "]"}], ";", "\n", "\n", 
+        RowBox[{"(*", 
+         RowBox[{
+         "Next", " ", "generate", " ", "the", " ", "random", " ", "spinor", 
+          " ", 
+          RowBox[{"components", ".", " ", "First"}], " ", "the", " ", "3", 
+          "n", " ", "for", " ", "the", " ", "reference", " ", "spinors"}], 
+         "*)"}], "\n", 
+        RowBox[{"(*", 
+         RowBox[{"We", " ", "later", " ", "solve", " ", "in", " ", 
+          RowBox[{"\[Xi]", "[", "n", "]"}], " ", "the", " ", "mass", " ", 
+          "condition"}], "*)"}], "\n", 
+        RowBox[{"Do", "[", "\n", 
+         RowBox[{
+          RowBox[{
+           RowBox[{
+            RowBox[{"\[Xi]t", "[", 
+             RowBox[{"i", "+", "n"}], "]"}], "=", "random"}], ";", "\n", 
+           RowBox[{
+            RowBox[{"\[Eta]", "[", 
+             RowBox[{"i", "+", "n"}], "]"}], "=", "random"}], ";", "\n", 
+           RowBox[{
+            RowBox[{"\[Eta]t", "[", 
+             RowBox[{"i", "+", "n"}], "]"}], "=", "random"}], ";"}], "\n", 
+          ",", 
+          RowBox[{"{", 
+           RowBox[{"i", ",", 
+            RowBox[{"n", "-", "fourD"}]}], "}"}]}], "]"}], ";", 
+        "\[IndentingNewLine]", "\[IndentingNewLine]", 
+        RowBox[{"(*", 
+         RowBox[{
+         "Then", " ", "set", " ", "the", " ", "masses", " ", "to", " ", 
+          "appropriate", " ", "values"}], "*)"}], "\[IndentingNewLine]", "\n",
+         "\n", 
+        RowBox[{"(*", 
+         RowBox[{
+          RowBox[{"Then", " ", "the", " ", "9"}], ":"}], "*)"}], "\n", 
+        RowBox[{
+         RowBox[{"\[Eta]t", "[", "1", "]"}], "=", "random"}], ";", "\n", 
+        RowBox[{
+         RowBox[{"\[Eta]t", "[", "2", "]"}], "=", "random"}], ";", "\n", 
+        RowBox[{
+         RowBox[{"\[Xi]t", "[", "1", "]"}], "=", "random"}], ";", "\n", 
+        RowBox[{
+         RowBox[{"\[Xi]t", "[", "2", "]"}], "=", "random"}], ";", "\n", 
+        RowBox[{
+         RowBox[{"\[Xi]", "[", "3", "]"}], "=", "random"}], ";", "\n", 
+        RowBox[{
+         RowBox[{"\[Eta]", "[", "3", "]"}], "=", "random"}], ";", "\n", 
+        RowBox[{
+         RowBox[{"\[Xi]", "[", "4", "]"}], "=", "random"}], ";", "\n", 
+        RowBox[{
+         RowBox[{"\[Eta]", "[", "1", "]"}], "=", "random"}], ";", "\n", 
+        RowBox[{
+         RowBox[{"\[Eta]", "[", "4", "]"}], "=", "random"}], ";", "\n", "\n", 
+        
+        RowBox[{"(*", 
+         RowBox[{
+          RowBox[{
+          "Depending", " ", "on", " ", "whether", " ", "a", " ", "parametric",
+            " ", "expression", " ", "is", " ", "required", " ", "or", " ", 
+           "not"}], ",", " ", 
+          RowBox[{
+          "we", " ", "set", " ", "the", " ", "other", " ", "variables", " ", 
+           "to", " ", "either", " ", "a", " ", "parameter", " ", "or", " ", 
+           "a", " ", "number"}]}], "*)"}], "\n", "\n", 
+        RowBox[{"If", "[", 
+         RowBox[{
+          RowBox[{"TrueQ", "[", 
+           RowBox[{"OptionValue", "[", "Parametric", "]"}], "]"}], ",", "\n", 
+          
+          RowBox[{"(*", 
+           RowBox[{"Parametric", " ", "components"}], "*)"}], "\n", 
+          RowBox[{
+           RowBox[{"par", "=", 
+            RowBox[{"OptionValue", "[", "ParameterName", "]"}]}], ";", "\n", 
+           RowBox[{
+            RowBox[{"\[Eta]t", "[", "3", "]"}], "=", 
+            RowBox[{"par", "[", "1", "]"}]}], ";", "\n", 
+           RowBox[{
+            RowBox[{"\[Eta]t", "[", "4", "]"}], "=", 
+            RowBox[{"par", "[", "2", "]"}]}], ";", "\n", 
+           RowBox[{
+            RowBox[{"\[Xi]t", "[", "4", "]"}], "=", 
+            RowBox[{"par", "[", "3", "]"}]}], ";", "\n", 
+           RowBox[{
+            RowBox[{"\[Xi]t", "[", 
+             RowBox[{"3", "+", "n"}], "]"}], "=", 
+            RowBox[{"par", "[", "4", "]"}]}], ";", "\n", 
+           RowBox[{
+            RowBox[{"\[Xi]t", "[", 
+             RowBox[{"4", "+", "n"}], "]"}], "=", 
+            RowBox[{"par", "[", "5", "]"}]}], ";", "\n", 
+           RowBox[{"count", "=", "6"}], ";", "\n", 
+           RowBox[{"Do", "[", "\n", 
+            RowBox[{
+             RowBox[{
+              RowBox[{
+               RowBox[{"\[Xi]", "[", "i", "]"}], "=", 
+               RowBox[{"par", "[", 
+                RowBox[{"count", "++"}], "]"}]}], ";", "\n", 
+              RowBox[{
+               RowBox[{"\[Eta]", "[", "i", "]"}], "=", 
+               RowBox[{"par", "[", 
+                RowBox[{"count", "++"}], "]"}]}], ";", "\n", 
+              RowBox[{
+               RowBox[{"\[Xi]t", "[", "i", "]"}], "=", 
+               RowBox[{"par", "[", 
+                RowBox[{"count", "++"}], "]"}]}], ";", "\n", 
+              RowBox[{
+               RowBox[{"\[Eta]t", "[", "i", "]"}], "=", 
+               RowBox[{"par", "[", 
+                RowBox[{"count", "++"}], "]"}]}], ";", "\n", 
+              RowBox[{
+               RowBox[{"\[Xi]t", "[", 
+                RowBox[{"i", "+", "n"}], "]"}], "=", 
+               RowBox[{"par", "[", 
+                RowBox[{"count", "++"}], "]"}]}], ";"}], "\n", ",", 
+             RowBox[{"{", 
+              RowBox[{"i", ",", "5", ",", "n"}], "}"}]}], "]"}], ";"}], "\n", 
+          ",", "\n", 
+          RowBox[{"(*", 
+           RowBox[{"Numeric", " ", "components"}], "*)"}], "\n", 
+          RowBox[{
+           RowBox[{
+            RowBox[{"\[Eta]t", "[", "3", "]"}], "=", "random"}], ";", "\n", 
+           RowBox[{
+            RowBox[{"\[Eta]t", "[", "4", "]"}], "=", "random"}], ";", "\n", 
+           RowBox[{
+            RowBox[{"\[Xi]t", "[", "4", "]"}], "=", "random"}], ";", "\n", 
+           RowBox[{
+            RowBox[{"\[Xi]t", "[", 
+             RowBox[{"3", "+", "n"}], "]"}], "=", "random"}], ";", "\n", 
+           RowBox[{
+            RowBox[{"\[Xi]t", "[", 
+             RowBox[{"4", "+", "n"}], "]"}], "=", "random"}], ";", "\n", 
+           RowBox[{"Do", "[", "\n", 
+            RowBox[{
+             RowBox[{
+              RowBox[{
+               RowBox[{"\[Xi]", "[", "i", "]"}], "=", "random"}], ";", "\n", 
+              RowBox[{
+               RowBox[{"\[Eta]", "[", "i", "]"}], "=", "random"}], ";", "\n", 
+              
+              RowBox[{
+               RowBox[{"\[Xi]t", "[", "i", "]"}], "=", "random"}], ";", "\n", 
+              
+              RowBox[{
+               RowBox[{"\[Eta]t", "[", "i", "]"}], "=", "random"}], ";", "\n", 
+              RowBox[{
+               RowBox[{"\[Xi]t", "[", 
+                RowBox[{"i", "+", "n"}], "]"}], "=", "random"}], ";"}], "\n", 
+             ",", 
+             RowBox[{"{", 
+              RowBox[{"i", ",", "5", ",", "n"}], "}"}]}], "]"}], ";"}]}], 
+         "\n", "]"}], ";", "\n", "\n", 
+        RowBox[{"(*", 
+         RowBox[{"Generate", " ", "momentum", " ", 
+          RowBox[{"conservation", ":"}]}], "*)"}], "\n", 
+        RowBox[{"system", "=", 
+         RowBox[{"{", 
+          RowBox[{
+           RowBox[{
+            RowBox[{"Sum", "[", 
+             RowBox[{
+              RowBox[{
+               RowBox[{"\[Xi]", "[", "i", "]"}], 
+               RowBox[{"\[Xi]t", "[", "i", "]"}]}], ",", 
+              RowBox[{"{", 
+               RowBox[{"i", ",", 
+                RowBox[{"2", "*", "n"}]}], "}"}]}], "]"}], "==", "0"}], ",", 
+           RowBox[{
+            RowBox[{"Sum", "[", 
+             RowBox[{
+              RowBox[{
+               RowBox[{"\[Xi]", "[", "i", "]"}], 
+               RowBox[{"\[Eta]t", "[", "i", "]"}]}], ",", 
+              RowBox[{"{", 
+               RowBox[{"i", ",", 
+                RowBox[{"2", "*", "n"}]}], "}"}]}], "]"}], "==", "0"}], ",", 
+           RowBox[{
+            RowBox[{"Sum", "[", 
+             RowBox[{
+              RowBox[{
+               RowBox[{"\[Eta]", "[", "i", "]"}], 
+               RowBox[{"\[Xi]t", "[", "i", "]"}]}], ",", 
+              RowBox[{"{", 
+               RowBox[{"i", ",", 
+                RowBox[{"2", "*", "n"}]}], "}"}]}], "]"}], "==", "0"}], ",", 
+           RowBox[{
+            RowBox[{"Sum", "[", 
+             RowBox[{
+              RowBox[{
+               RowBox[{"\[Eta]", "[", "i", "]"}], 
+               RowBox[{"\[Eta]t", "[", "i", "]"}]}], ",", 
+              RowBox[{"{", 
+               RowBox[{"i", ",", 
+                RowBox[{"2", "*", "n"}]}], "}"}]}], "]"}], "==", "0"}], ",", 
+           RowBox[{
+            RowBox[{"Sum", "[", 
+             RowBox[{
+              RowBox[{
+               RowBox[{
+                RowBox[{"\[Xi]", "[", "i", "]"}], 
+                RowBox[{"\[Eta]", "[", 
+                 RowBox[{"i", "+", "n"}], "]"}]}], "-", 
+               RowBox[{
+                RowBox[{"\[Xi]", "[", 
+                 RowBox[{"i", "+", "n"}], "]"}], 
+                RowBox[{"\[Eta]", "[", "i", "]"}]}]}], ",", 
+              RowBox[{"{", 
+               RowBox[{"i", ",", "n"}], "}"}]}], "]"}], "==", "0"}], ",", 
+           RowBox[{
+            RowBox[{"Sum", "[", 
+             RowBox[{
+              RowBox[{
+               RowBox[{
+                RowBox[{"\[Eta]t", "[", 
+                 RowBox[{"i", "+", "n"}], "]"}], 
+                RowBox[{"\[Xi]t", "[", "i", "]"}]}], "-", 
+               RowBox[{
+                RowBox[{"\[Xi]t", "[", 
+                 RowBox[{"i", "+", "n"}], "]"}], 
+                RowBox[{"\[Eta]t", "[", "i", "]"}]}]}], ",", 
+              RowBox[{"{", 
+               RowBox[{"i", ",", "n"}], "}"}]}], "]"}], "==", "0"}]}], 
+          "}"}]}], ";", "\n", "\n", 
+        RowBox[{"(*", 
+         RowBox[{"Solve", " ", "momentum", " ", "conservation"}], "*)"}], 
+        "\n", 
+        RowBox[{"sol", "=", 
+         RowBox[{"Solve", "[", 
+          RowBox[{"system", ",", 
+           RowBox[{"{", 
+            RowBox[{
+             RowBox[{"\[Xi]", "[", "1", "]"}], ",", 
+             RowBox[{"\[Xi]", "[", "2", "]"}], ",", 
+             RowBox[{"\[Eta]", "[", "2", "]"}], ",", 
+             RowBox[{"\[Xi]t", "[", "3", "]"}], ",", 
+             RowBox[{"\[Xi]t", "[", 
+              RowBox[{"1", "+", "n"}], "]"}], ",", 
+             RowBox[{"\[Xi]t", "[", 
+              RowBox[{"2", "+", "n"}], "]"}]}], "}"}]}], "]"}]}], ";", "\n", 
+        "\n", 
+        RowBox[{"(*", 
+         RowBox[{"Safety", " ", "check"}], "*)"}], "\n", 
+        RowBox[{"If", "[", 
+         RowBox[{
+          RowBox[{"sol", "===", 
+           RowBox[{"{", "}"}]}], ",", "\n", 
+          RowBox[{
+           RowBox[{"Message", "[", 
+            RowBox[{"GenSpinors", "::", "unsolvablekinematics"}], "]"}], ";", 
+           "\n", 
+           RowBox[{"Throw", "[", "$Failed", "]"}]}], ",", "\n", 
+          RowBox[{
+           RowBox[{"sol", "=", 
+            RowBox[{"sol", "//", "First"}]}], ";"}]}], "\n", "]"}], ";", "\n",
+         "\n", 
+        RowBox[{"(*", 
+         RowBox[{
+          RowBox[{
+           RowBox[{
+            RowBox[{
+            "Now", " ", "that", " ", "all", " ", "the", " ", "spinor", " ", 
+             "components", " ", "have", " ", "been", " ", "generated", " ", 
+             "we", " ", "just", " ", "need", " ", "to", " ", "return", " ", 
+             "them", " ", "in", " ", "a", " ", "suitably", " ", "packaged", 
+             " ", 
+             RowBox[{"output", ".", " ", "The"}], " ", "oupt", " ", "will", 
+             " ", "be", " ", "divided", " ", "into", " ", "6", "D", " ", 
+             "and", " ", "4", "D", " ", "and", " ", "then", " ", "further", 
+             " ", "into", " ", 
+             RowBox[{
+              RowBox[{"{", 
+               RowBox[{"\[Lambda]", ",", "\[Lambda]t", ",", 
+                RowBox[{"\[Lambda]", "'"}], ",", 
+                RowBox[{"\[Lambda]t", "'"}]}], "}"}], ".", " ", "Notice"}], 
+             " ", "that", " ", "these", " ", "spinors", " ", "will", " ", 
+             "be", " ", "considered", " ", "all", " ", "having", " ", "upper",
+              " ", "indices", " ", "so", " ", "the", " ", "spinors", " ", 
+             "will", " ", "be", " ", "like", " ", "\[Lambda]"}], "=", 
+            RowBox[{"\[LeftAngleBracket]", 
+             RowBox[{
+              RowBox[{"\[Lambda]", "|", " ", 
+               RowBox[{"and", " ", "\[Lambda]t"}]}], "=", 
+              RowBox[{"|", "\[Lambda]t"}]}]}]}], "]"}], "."}], "*)"}], "\n", 
+        "\n", 
+        RowBox[{"(*", 
+         RowBox[{
+         "List", " ", "of", " ", "the", " ", "6", "D", " ", "spinors"}], 
+         "*)"}], "\n", 
+        RowBox[{"out", "=", 
+         RowBox[{"Table", "[", 
+          RowBox[{
+           RowBox[{"{", 
+            RowBox[{
+             RowBox[{"{", 
+              RowBox[{
+               RowBox[{"\[Xi]", "[", "i", "]"}], ",", 
+               RowBox[{"\[Eta]", "[", "i", "]"}]}], "}"}], ",", 
+             RowBox[{"{", 
+              RowBox[{
+               RowBox[{"\[Xi]t", "[", "i", "]"}], ",", 
+               RowBox[{"\[Eta]t", "[", "i", "]"}]}], "}"}], ",", 
+             RowBox[{"{", 
+              RowBox[{
+               RowBox[{"\[Xi]", "[", 
+                RowBox[{"i", "+", "n"}], "]"}], ",", 
+               RowBox[{"\[Eta]", "[", 
+                RowBox[{"i", "+", "n"}], "]"}]}], "}"}], ",", 
+             RowBox[{"{", 
+              RowBox[{
+               RowBox[{"\[Xi]t", "[", 
+                RowBox[{"i", "+", "n"}], "]"}], ",", 
+               RowBox[{"\[Eta]t", "[", 
+                RowBox[{"i", "+", "n"}], "]"}]}], "}"}]}], "}"}], ",", 
+           RowBox[{"{", 
+            RowBox[{"i", ",", 
+             RowBox[{"n", "-", "fourD"}]}], "}"}]}], "]"}]}], ";", "\n", "\n", 
+        RowBox[{"(*", 
+         RowBox[{
+         "Then", " ", "append", " ", "the", " ", "table", " ", "of", " ", 
+          "the", " ", "4", "D", " ", "components", " ", "and", " ", "replece",
+           " ", "the", " ", "solutions", " ", "to", " ", "momentum", " ", 
+          "conservation"}], "*)"}], "\n", 
+        RowBox[{"out", "=", 
+         RowBox[{
+          RowBox[{"{", 
+           RowBox[{"out", ",", 
+            RowBox[{"Table", "[", 
+             RowBox[{
+              RowBox[{"{", 
+               RowBox[{
+                RowBox[{"{", 
+                 RowBox[{
+                  RowBox[{"\[Xi]", "[", "i", "]"}], ",", 
+                  RowBox[{"\[Eta]", "[", "i", "]"}]}], "}"}], ",", 
+                RowBox[{"{", 
+                 RowBox[{
+                  RowBox[{"\[Xi]t", "[", "i", "]"}], ",", 
+                  RowBox[{"\[Eta]t", "[", "i", "]"}]}], "}"}]}], "}"}], ",", 
+              RowBox[{"{", 
+               RowBox[{"i", ",", 
+                RowBox[{"n", "-", "fourD", "+", "1"}], ",", "n"}], "}"}]}], 
+             "]"}]}], "}"}], "/.", "sol"}]}], ";", "\n", "\n", 
+        RowBox[{"Return", "[", "out", "]"}], ";"}]}], "\n", "]"}], ";"}], 
+    "\n", "]"}]}], ";"}]}], "Input",
+ CellChangeTimes->{{3.841494153729528*^9, 3.841494163198235*^9}, {
+  3.841494258800424*^9, 3.841494269997267*^9}, {3.8414943002532597`*^9, 
+  3.841494354448978*^9}, {3.8414944069852667`*^9, 3.84149448165862*^9}, {
+  3.841494583699512*^9, 3.8414946597491407`*^9}, {3.841494725156152*^9, 
+  3.8414947432340813`*^9}},ExpressionUUID->"53856074-823a-4449-9e86-\
+edda6686a46c"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"{", 
+   RowBox[{"a", ",", "b", ",", "c"}], "}"}], "=", 
+  RowBox[{"ConstantArray", "[", 
+   RowBox[{
+    RowBox[{"RandomInteger", "[", "100", "]"}], ",", "3"}], "]"}]}]], "Input",\
+
+ CellChangeTimes->{{3.841495415354018*^9, 3.841495436398519*^9}},
+ CellLabel->"In[2]:=",ExpressionUUID->"e54cc5cb-72e7-4703-b1f6-fe1d39f5ba88"],
+
+Cell[BoxData[
+ RowBox[{"{", 
+  RowBox[{"56", ",", "56", ",", "56"}], "}"}]], "Output",
+ CellChangeTimes->{3.841495436991249*^9},
+ CellLabel->"Out[2]=",ExpressionUUID->"1334937a-c3f2-4399-8cde-d4fcc3bc9299"]
+}, Open  ]]
+},
+WindowSize->{831.5999999999999, 448.2},
+WindowMargins->{{119.4, Automatic}, {61.80000000000007, Automatic}},
+InputAliases->Association["intt" -> RowBox[{"\[Integral]", 
+     RowBox[{"\[SelectionPlaceholder]", 
+       RowBox[{"\[DifferentialD]", "\[Placeholder]"}]}]}], "dintt" -> 
+  RowBox[{
+     SubsuperscriptBox[
+     "\[Integral]", "\[SelectionPlaceholder]", "\[Placeholder]"], 
+     RowBox[{"\[Placeholder]", 
+       RowBox[{"\[DifferentialD]", "\[Placeholder]"}]}]}], "rintt" -> 
+  RowBox[{
+     UnderscriptBox["\[Integral]", 
+      RowBox[{"\[SelectionPlaceholder]", "\[Element]", "\[Placeholder]"}]], 
+     "\[Placeholder]"}], "sumt" -> RowBox[{
+     UnderoverscriptBox["\[Sum]", 
+      RowBox[{"\[SelectionPlaceholder]", "=", "\[Placeholder]"}], 
+      "\[Placeholder]"], "\[Placeholder]"}], "prodt" -> RowBox[{
+     UnderoverscriptBox["\[Product]", 
+      RowBox[{"\[SelectionPlaceholder]", "=", "\[Placeholder]"}], 
+      "\[Placeholder]"], "\[Placeholder]"}], "dt" -> RowBox[{
+     SubscriptBox["\[PartialD]", "\[SelectionPlaceholder]"], 
+     "\[Placeholder]"}], "cbrt" -> 
+  RadicalBox[
+   "\[SelectionPlaceholder]", "3", SurdForm -> True, MultilineFunction -> 
+    None], "surd" -> 
+  RadicalBox[
+   "\[SelectionPlaceholder]", "\[Placeholder]", SurdForm -> True, 
+    MultilineFunction -> None], "ket" -> 
+  TemplateBox[{"\[SelectionPlaceholder]"}, "Ket"], "bra" -> 
+  TemplateBox[{"\[SelectionPlaceholder]"}, "Bra"], "braket" -> 
+  TemplateBox[{"\[SelectionPlaceholder]", "\[Placeholder]"}, "BraKet"], 
+  "delay" -> TemplateBox[{"\[SelectionPlaceholder]"}, "SystemsModelDelay"], 
+  "grad" -> RowBox[{
+     SubscriptBox["\[Del]", "\[SelectionPlaceholder]"], "\[Placeholder]"}], 
+  "del." -> RowBox[{
+     SubscriptBox["\[Del]", "\[SelectionPlaceholder]"], ".", 
+     "\[Placeholder]"}], "delx" -> RowBox[{
+     SubscriptBox["\[Del]", "\[SelectionPlaceholder]"], "\[Cross]", 
+     "\[Placeholder]"}], "del2" -> RowBox[{
+     SubsuperscriptBox["\[Del]", "\[SelectionPlaceholder]", 2], 
+     "\[Placeholder]"}], "kd" -> 
+  TemplateBox[{"\[SelectionPlaceholder]"}, "KroneckerDeltaSeq"], "algs" -> 
+  TemplateBox[{}, "Algebraics"], "bools" -> TemplateBox[{}, "Booleans"], 
+  "comps" -> TemplateBox[{}, "Complexes"], "ints" -> 
+  TemplateBox[{}, "Integers"], "pris" -> TemplateBox[{}, "Primes"], "rats" -> 
+  TemplateBox[{}, "Rationals"], "reals" -> TemplateBox[{}, "Reals"], "pints" -> 
+  TemplateBox[{}, "PositiveIntegers"], "npints" -> 
+  TemplateBox[{}, "NonPositiveIntegers"], "nnints" -> 
+  TemplateBox[{}, "NonNegativeIntegers"], "nints" -> 
+  TemplateBox[{}, "NegativeIntegers"], "prats" -> 
+  TemplateBox[{}, "PositiveRationals"], "nprats" -> 
+  TemplateBox[{}, "NonPositiveRationals"], "nnrats" -> 
+  TemplateBox[{}, "NonNegativeRationals"], "nrats" -> 
+  TemplateBox[{}, "NegativeRationals"], "preals" -> 
+  TemplateBox[{}, "PositiveReals"], "npreals" -> 
+  TemplateBox[{}, "NonPositiveReals"], "nnreals" -> 
+  TemplateBox[{}, "NonNegativeReals"], "nreals" -> 
+  TemplateBox[{}, "NegativeReals"], "dlim" -> RowBox[{
+     UnderscriptBox["\[Limit]", 
+      RowBox[{"\[SelectionPlaceholder]", 
+        UnderscriptBox["\[Rule]", 
+         TemplateBox[{}, "Integers"]], "\[Infinity]"}]], "\[Placeholder]"}], 
+  "dMlim" -> RowBox[{
+     UnderscriptBox["\[MaxLimit]", 
+      RowBox[{"\[SelectionPlaceholder]", 
+        UnderscriptBox["\[Rule]", 
+         TemplateBox[{}, "Integers"]], "\[Infinity]"}]], "\[Placeholder]"}], 
+  "dmlim" -> RowBox[{
+     UnderscriptBox["\[MinLimit]", 
+      RowBox[{"\[SelectionPlaceholder]", 
+        UnderscriptBox["\[Rule]", 
+         TemplateBox[{}, "Integers"]], "\[Infinity]"}]], "\[Placeholder]"}], 
+  "tue" -> OverscriptBox["\[UndirectedEdge]", "\[Placeholder]"], "tde" -> 
+  OverscriptBox["\[DirectedEdge]", "\[Placeholder]"], "cB" -> 
+  TemplateBox[{}, "CombinatorB"], "cC" -> TemplateBox[{}, "CombinatorC"], 
+  "cI" -> TemplateBox[{}, "CombinatorI"], "cK" -> 
+  TemplateBox[{}, "CombinatorK"], "cS" -> TemplateBox[{}, "CombinatorS"], 
+  "cW" -> TemplateBox[{}, "CombinatorW"], "cY" -> 
+  TemplateBox[{}, "CombinatorY"], "lu" -> 
+  TemplateBox[{"\[SelectionPlaceholder]", "\[SelectionPlaceholder]"}, 
+    "SpinorLaUp", DisplayFunction -> (RowBox[{
+       SuperscriptBox["\[Lambda]", #2], "[", #, "]"}]& ), 
+    InterpretationFunction -> (
+     RowBox[{"Spinorundot", "[", #, "]", "[", "$lam", "]", "[", #2, "]", "[", 
+       "Null", "]"}]& )], "ld" -> 
+  TemplateBox[{"\[SelectionPlaceholder]", "\[SelectionPlaceholder]"}, 
+    "SpinorLaDown", DisplayFunction -> (RowBox[{
+       SubscriptBox["\[Lambda]", #2], "[", #, "]"}]& ), 
+    InterpretationFunction -> (
+     RowBox[{"Spinorundot", "[", #, "]", "[", "$lam", "]", "[", "Null", "]", 
+       "[", #2, "]"}]& )], "muu" -> 
+  TemplateBox[{"\[SelectionPlaceholder]", "\[SelectionPlaceholder]"}, 
+    "SpinorMuUp", DisplayFunction -> (RowBox[{
+       SuperscriptBox["\[Mu]", #2], "[", #, "]"}]& ), 
+    InterpretationFunction -> (
+     RowBox[{"Spinorundot", "[", #, "]", "[", "$mu", "]", "[", #2, "]", "[", 
+       "Null", "]"}]& )], "mud" -> 
+  TemplateBox[{"\[SelectionPlaceholder]", "\[SelectionPlaceholder]"}, 
+    "SpinorMuDown", DisplayFunction -> (RowBox[{
+       SubscriptBox["\[Mu]", #2], "[", #, "]"}]& ), 
+    InterpretationFunction -> (
+     RowBox[{"Spinorundot", "[", #, "]", "[", "$mu", "]", "[", "Null", "]", 
+       "[", #2, "]"}]& )], "lp" -> 
+  TemplateBox[{"\[SelectionPlaceholder]"}, "SpinorUndotPureL", 
+    DisplayFunction -> (RowBox[{"\[Lambda]", "[", #, "]"}]& ), 
+    InterpretationFunction -> (
+     RowBox[{"SpinorUndotPure", "[", #, "]", "[", "$lam", "]"}]& )], "mp" -> 
+  TemplateBox[{"\[SelectionPlaceholder]"}, "SpinorUndotPureM", 
+    DisplayFunction -> (RowBox[{"\[Mu]", "[", #, "]"}]& ), 
+    InterpretationFunction -> (
+     RowBox[{"SpinorUndotPure", "[", #, "]", "[", "$mu", "]"}]& )], "Ld" -> 
+  TemplateBox[{
+    "\[SelectionPlaceholder]", "\[SelectionPlaceholder]", 
+     "\[SelectionPlaceholder]"}, "SpinorUndot6D", 
+    DisplayFunction -> (RowBox[{
+       SubscriptBox[
+        SuperscriptBox["\[CapitalLambda]", #2], #3], "[", #, "]"}]& ), 
+    InterpretationFunction -> (
+     RowBox[{"SpinorUndot6D", "[", #, "]", "[", #2, "]", "[", "Null", "]", 
+       "[", #3, "]"}]& )], "ltu" -> 
+  TemplateBox[{"\[SelectionPlaceholder]", "\[SelectionPlaceholder]"}, 
+    "SpinorLatUp", DisplayFunction -> (RowBox[{
+       SuperscriptBox[
+        OverscriptBox["\[Lambda]", "~"], #2], "[", #, "]"}]& ), 
+    InterpretationFunction -> (
+     RowBox[{"Spinordot", "[", #, "]", "[", "$lam", "]", "[", #2, "]", "[", 
+       "Null", "]"}]& )], "ltd" -> 
+  TemplateBox[{"\[SelectionPlaceholder]", "\[SelectionPlaceholder]"}, 
+    "SpinorLatDown", DisplayFunction -> (RowBox[{
+       SubscriptBox[
+        OverscriptBox["\[Lambda]", "~"], #2], "[", #, "]"}]& ), 
+    InterpretationFunction -> (
+     RowBox[{"Spinordot", "[", #, "]", "[", "$lam", "]", "[", "Null", "]", 
+       "[", #2, "]"}]& )], "mtu" -> 
+  TemplateBox[{"\[SelectionPlaceholder]", "\[SelectionPlaceholder]"}, 
+    "SpinorMutUp", DisplayFunction -> (RowBox[{
+       SuperscriptBox[
+        OverscriptBox["\[Mu]", "~"], #2], "[", #, "]"}]& ), 
+    InterpretationFunction -> (
+     RowBox[{"Spinordot", "[", #, "]", "[", "$mu", "]", "[", #2, "]", "[", 
+       "Null", "]"}]& )], "mtd" -> 
+  TemplateBox[{"\[SelectionPlaceholder]", "\[SelectionPlaceholder]"}, 
+    "SpinorMutDown", DisplayFunction -> (RowBox[{
+       SubscriptBox[
+        OverscriptBox["\[Mu]", "~"], #2], "[", #, "]"}]& ), 
+    InterpretationFunction -> (
+     RowBox[{"Spinordot", "[", #, "]", "[", "$mu", "]", "[", "Null", "]", 
+       "[", #2, "]"}]& )], "ltp" -> 
+  TemplateBox[{"\[SelectionPlaceholder]"}, "SpinorDotPureL", 
+    DisplayFunction -> (RowBox[{
+       OverscriptBox["\[Lambda]", "~"], "[", #, "]"}]& ), 
+    InterpretationFunction -> (
+     RowBox[{"SpinorDotPure", "[", #, "]", "[", "$lam", "]"}]& )], "mtp" -> 
+  TemplateBox[{"\[SelectionPlaceholder]"}, "SpinorDotPureM", 
+    DisplayFunction -> (RowBox[{
+       OverscriptBox["\[Mu]", "~"], "[", #, "]"}]& ), 
+    InterpretationFunction -> (
+     RowBox[{"SpinorDotPure", "[", #, "]", "[", "$mu", "]"}]& )], "Ltd" -> 
+  TemplateBox[{
+    "\[SelectionPlaceholder]", "\[SelectionPlaceholder]", 
+     "\[SelectionPlaceholder]"}, "SpinorDot6D", DisplayFunction -> (RowBox[{
+       SubscriptBox[
+        SubscriptBox[
+         OverscriptBox["\[CapitalLambda]", "~"], #2], #3], "[", #, "]"}]& ), 
+    InterpretationFunction -> (
+     RowBox[{"SpinorDot6D", "[", #, "]", "[", #2, "]", "[", "Null", "]", 
+       "[", #3, "]"}]& )], "lcup" -> 
+  TemplateBox[{"\[SelectionPlaceholder]", "\[SelectionPlaceholder]"}, 
+    "levicivita2up", DisplayFunction -> (SuperscriptBox["\[Epsilon]", 
+      RowBox[{#, #2}]]& ), 
+    InterpretationFunction -> (
+     RowBox[{"levicivita2up", "[", #, ",", #2, "]"}]& )], "lcd" -> 
+  TemplateBox[{"\[SelectionPlaceholder]", "\[SelectionPlaceholder]"}, 
+    "levicivita2down", DisplayFunction -> (SubscriptBox["\[Epsilon]", 
+      RowBox[{#, #2}]]& ), 
+    InterpretationFunction -> (
+     RowBox[{"levicivita2down", "[", #, ",", #2, "]"}]& )], "ab" -> 
+  TemplateBox[{"\[SelectionPlaceholder]", "\[Placeholder]"}, 
+    "SpinorAngleBracket", DisplayFunction -> (RowBox[{"\[LeftAngleBracket]", 
+       RowBox[{#, "\[MediumSpace]", #2}], "\[RightAngleBracket]"}]& ), 
+    InterpretationFunction -> (RowBox[{"Spinoranglebracket", "[", 
+       RowBox[{#, ",", #2}], "]"}]& )], "sb" -> 
+  TemplateBox[{"\[SelectionPlaceholder]", "\[Placeholder]"}, 
+    "SpinorSquareBracket", DisplayFunction -> (RowBox[{"[", 
+       RowBox[{#, "\[MediumSpace]", #2}], "]"}]& ), 
+    InterpretationFunction -> (RowBox[{"Spinorsquarebracket", "[", 
+       RowBox[{#, ",", #2}], "]"}]& )], "sai" -> 
+  TemplateBox[{
+    "\[SelectionPlaceholder]", "\[SelectionPlaceholder]", 
+     "\[SelectionPlaceholder]", "\[SelectionPlaceholder]"}, "SquAngInvariant",
+     DisplayFunction -> (RowBox[{"[", 
+       SubscriptBox[#, #3], ",", 
+       SubscriptBox[#2, #4], "\[RightAngleBracket]"}]& ), 
+    InterpretationFunction -> (
+     RowBox[{
+      "Squanginvariant", "[", #, ",", #2, "]", "[", #3, ",", #4, "]"}]& )], 
+  "asi" -> TemplateBox[{
+    "\[SelectionPlaceholder]", "\[SelectionPlaceholder]", 
+     "\[SelectionPlaceholder]", "\[SelectionPlaceholder]"}, "AngSquInvariant",
+     DisplayFunction -> (RowBox[{"\[LeftAngleBracket]", 
+       SubscriptBox[#, #3], ",", 
+       SubscriptBox[#2, #4], "]"}]& ), 
+    InterpretationFunction -> (
+     RowBox[{"Angsquinvariant", "[", #, ",", #2, "]", "[", #3, ",", #4, 
+       "]"}]& )], "aa" -> 
+  TemplateBox[{
+    "\[SelectionPlaceholder]", "\[SelectionPlaceholder]", 
+     "\[SelectionPlaceholder]", "\[SelectionPlaceholder]", 
+     "\[SelectionPlaceholder]", "\[SelectionPlaceholder]", 
+     "\[SelectionPlaceholder]", "\[SelectionPlaceholder]"}, "AngAngInvariant",
+     DisplayFunction -> (RowBox[{"\[LeftAngleBracket]", 
+       SubscriptBox[#, #5], ",", 
+       SubscriptBox[#2, #6], ",", 
+       SubscriptBox[#3, #7], ",", 
+       SubscriptBox[#4, #8], "\[RightAngleBracket]"}]& ), 
+    InterpretationFunction -> (
+     RowBox[{"Anganginvariant", "[", #, ",", #2, ",", #3, ",", #4, "]", 
+       "[", #5, ",", #6, ",", #7, ",", #8, "]"}]& )], "bb" -> 
+  TemplateBox[{
+    "\[SelectionPlaceholder]", "\[SelectionPlaceholder]", 
+     "\[SelectionPlaceholder]", "\[SelectionPlaceholder]", 
+     "\[SelectionPlaceholder]", "\[SelectionPlaceholder]", 
+     "\[SelectionPlaceholder]", "\[SelectionPlaceholder]"}, "SquSquInvariant",
+     DisplayFunction -> (RowBox[{"[", 
+       SubscriptBox[#, #5], ",", 
+       SubscriptBox[#2, #6], ",", 
+       SubscriptBox[#3, #7], ",", 
+       SubscriptBox[#4, #8], "]"}]& ), 
+    InterpretationFunction -> (
+     RowBox[{"Squsquinvariant", "[", #, ",", #2, ",", #3, ",", #4, "]", 
+       "[", #5, ",", #6, ",", #7, ",", #8, "]"}]& )], "fst" -> 
+  TemplateBox[{
+    "\[SelectionPlaceholder]", "\[SelectionPlaceholder]", 
+     "\[SelectionPlaceholder]", "\[SelectionPlaceholder]", 
+     "\[SelectionPlaceholder]", "\[SelectionPlaceholder]", 
+     "\[SelectionPlaceholder]"}, "Fstrength", DisplayFunction -> (RowBox[{
+       SubscriptBox[
+        SuperscriptBox["F", 
+         RowBox[{#2, #3}]], 
+        RowBox[{#4, #5}]], "[", 
+       SubscriptBox[#, 
+        RowBox[{#6, #7}]], "]"}]& ), 
+    InterpretationFunction -> (
+     RowBox[{"Fstrength[", #, "][", #2, ",", #3, "][", #4, ",", #5, "][", #6, 
+       ",", #7, "]"}]& )], "md" -> 
+  TemplateBox[{"\[SelectionPlaceholder]", "\[SelectionPlaceholder]", 4}, 
+    "MDelta", DisplayFunction -> (RowBox[{
+       SubscriptBox[
+        SuperscriptBox["\[Delta]", #], #2]}]& ), 
+    InterpretationFunction -> (
+     RowBox[{"MDelta", "[", #3, "][", #, "][", #2, "]"}]& )]],
+FrontEndVersion->"12.3 for Linux x86 (64-bit) (May 11, 2021)",
+StyleDefinitions->"Default.nb",
+ExpressionUUID->"880490cb-1f3d-491a-816f-9558dca22de0"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[558, 20, 408, 9, 50, "Input",ExpressionUUID->"b803ddc9-408e-41cd-b197-972d4f7bf704"],
+Cell[969, 31, 298, 7, 29, "Input",ExpressionUUID->"baf7de61-fb07-4fa6-b718-a5f3c6e70397"],
+Cell[1270, 40, 18765, 447, 2411, "Input",ExpressionUUID->"53856074-823a-4449-9e86-edda6686a46c"],
+Cell[CellGroupData[{
+Cell[20060, 491, 360, 9, 29, "Input",ExpressionUUID->"e54cc5cb-72e7-4703-b1f6-fe1d39f5ba88"],
+Cell[20423, 502, 206, 4, 33, "Output",ExpressionUUID->"1334937a-c3f2-4399-8cde-d4fcc3bc9299"]
+}, Open  ]]
+}
+]
+*)
+
