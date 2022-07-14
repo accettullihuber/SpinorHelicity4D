@@ -16,7 +16,7 @@ ClearAll@@Names["SpinorNumerics`*"];
 (*Function description*)
 
 
-(*
+
 GenSpinors::usage="GenSpinors[{x1,x2,...,xn},{Options}] generates numerical values for the spinors corresponding to on-shell, conserved, complex kinematics. The spinors are labelled by x1,x2,...,xn and the function allows for the following options: {Dimension,DisplaySpinors,Parametric,ParameterName,ParameterRange,RationalKinematics,Seed,SetMomentum,Type3pt}. For further details type ?OptionName."
 Dimension::usage="Dimension is an option for GenSpinors. It specifies the dimension of the generated kinematics. Default is 6, allowed are 6 and 4."
 DisplaySpinors::usage="DisplaySpinors is an option for GenSpinors. If set to True the generated kinematics is displayed. Default is False."
@@ -29,17 +29,19 @@ RandomSpinors::usage="RandomSpinors is an option for GenSpinors. It allows to ge
 $par::usage="Protected symbol. It is the default name of the variables in GenSpinors."
 SetMomentum::usage="SetMomentum is an option for GenSpinors. It allows to set the numeric componenst of the first spinors to specific values. It allows as values spinor components as well as labels of already generated momenta."
 Type3pt::usage="Type3pt is an option for GenSpinors. When generating three-particle kinematics it allows to specify which king of brackets, angle or square, are non-vanishing. Default value is $angle."
-MomMat4DN::usage="MomMat4DN[label][type] is the numeric momentum written as a mtarix in spinor representation. Type is either $up or $down and represents the position of the spinor indices."
+SameMasses::usage="SameMasses is an option for GenSpinors, which allows to set masses of different labels to be the same. Input form is either a list of labels {p1,p2,...,pn} or a list of lists {{\!\(\*SubscriptBox[\(p\), \(1\)]\),...,\!\(\*SubscriptBox[\(p\), \(n\)]\)},{\!\(\*SubscriptBox[\(p\), \(2\)]\),...,\!\(\*SubscriptBox[\(p\), \(k\)]\)},...} which sets \!\(\*SubscriptBox[\(m\), \(1\)]\)=...=\!\(\*SubscriptBox[\(m\), \(n\)]\), \!\(\*SubscriptBox[\(m\), \(2\)]\)=...=\!\(\*SubscriptBox[\(m\), \(k\)]\)"
+(*MomMat4DN::usage="MomMat4DN[label][type] is the numeric momentum written as a mtarix in spinor representation. Type is either $up or $down and represents the position of the spinor indices."
 Mom4DN::usage="Mom4DN[label] is the four-dimensional numeric momentum vector associated to label."
 MomMat6DN::usage="MomMat6DN[label][type] is the six-dimensional momentum matrix. The argument type represents the position of the Lorentz indices."
 Mom6DN::usage="Mom6DN[label] is the six-dimensional numeric momentum vector associated to label."
-PauliSix::usage="PauliSix[i] is the i'th six-dimensional pauli matrix."
+PauliSix::usage="PauliSix[i] is the i'th six-dimensional pauli matrix."*)
 MomToSpinors::usage="MomToSpinors[vector,label] generates the spinors associated to the given vector. This can be four-dimensional massless or massive or six-dimensional. The optional argument label allows to store the generated values of the spinors."
 ClearKinematics::usage="ClearKinematics clears all the so far generated and stored numerical values for the kinematics."
-ExtramassN::usage="ExtramassN[label] is the numerical equivalent of Extramass[label]."
+(*ExtramassN::usage="ExtramassN[label] is the numerical equivalent of Extramass[label]."
 ExtramasstildeN::usage="ExtramasstildeN[label] is the numerical equivalent of Extramasstilde[label]."
-ToNum::usage="TuNum[exp] return numeric value of exp. It requires some kind of numerical kinematics to be generated first using GenSpinors."
 *)
+ToNum::usage="TuNum[exp] return numeric value of exp. It requires some kind of numerical kinematics to be generated first using GenSpinors."
+
 
 
 (* ::Section:: *)
@@ -112,7 +114,7 @@ ClearSubValues[#]&/@{MomMat4DN};
 ];
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*ClearKinematics (? Extramass and Redefine 6D kinematics?)*)
 
 
@@ -240,7 +242,7 @@ Return[out];
 ];*)
 
 
-Options[GenerateKinematics]={RationalKinematics->True,ParameterRange->1000,Parametric->False,ParameterName->$par}
+(*Options[GenerateKinematics]={RationalKinematics->True,ParameterRange->1000,Parametric->False,ParameterName->$par}
 {RationalKinematics->True,ParameterRange->1000,Parametric->False,ParameterName->$par}
 
 GenerateKinematics[total_Integer,fourD_Integer,OptionsPattern[]]:=Catch[Module[{\[Xi],\[Eta],\[Xi]t,\[Eta]t,n,random,system,sol,par,count,out},
@@ -337,6 +339,407 @@ out=Table[{{\[Xi][i],\[Eta][i]},{\[Xi]t[i],\[Eta]t[i]},{\[Xi][i+n],\[Eta][i+n]},
 
 (*Then append the table of the 4D components and replece the solutions to momentum conservation*)
 out={out,Table[{{\[Xi][i],\[Eta][i]},{\[Xi]t[i],\[Eta]t[i]}},{i,n-fourD+1,n}]}/.sol;
+
+Return[out];
+];
+];*)
+
+
+(*First attempt at mixed kinematics, works nicely, but produces irrational kinematics...*)
+
+(*Options[GenerateKinematics]={RationalKinematics->True,ParameterRange->1000,Parametric->False,ParameterName->$par}
+{RationalKinematics->True,ParameterRange->1000,Parametric->False,ParameterName->$par}
+
+(*Samemass is a list of integers representing the number of masses which have been requested as to be the same*)
+
+GenerateKinematics[total_Integer,fourD_Integer,samemass_List,OptionsPattern[]]:=Catch[Module[{\[Xi],\[Eta],\[Xi]t,\[Eta]t,n,random,system,sol,par,count,out},
+
+(*First we check that total \[GreaterEqual] fourD+2 *)
+If[total<fourD+2,Throw["Please check input, impossible kinematics has been requested."];
+];
+
+(*The number of masses required to be the same must be less or equal to the total number of masses*)
+If[total-fourD<Total@samemass,Throw["Please check input, impossible kinematics has been requested."];
+];
+
+n=total;
+
+(*Next fix the components of the four-dimensional massless spinors*)
+Do[
+\[Xi][i+n]=0;
+\[Eta][i+n]=0;
+\[Eta]t[i+n]=\[Eta]t[i]*\[Xi]t[i+n]/\[Xi]t[i];
+,{i,n-fourD+1,n}];
+(*Do[
+\[Xi][i+n]=0;
+\[Eta][i+n]=0;
+\[Eta]t[i+n]=0;
+\[Xi]t[i+n]=0;
+,{i,n-fourD+1,n}];*)
+
+(*Based on the options given assign rational rather than real kinematics and the range of the interval over which to generate it*)
+If[TrueQ[OptionValue[RationalKinematics]],
+random:=RandomInteger[OptionValue[ParameterRange]],
+random:=RandomReal[OptionValue[ParameterRange]];
+];
+
+(*Next generate the random spinor components. First the 3n*)
+
+Do[
+\[Xi][i+n]=random;
+\[Eta][i+n]=random;
+\[Eta]t[i+n]=random;
+,{i,n-fourD}];
+
+(*Then the 9 + the two for which we do not solve momcon in 4d:*)
+\[Eta]t[1]=random;
+\[Eta]t[2]=random;
+\[Xi]t[1]=random;
+\[Xi]t[2]=random;
+\[Xi][3]=random;
+\[Eta][3]=random;
+\[Xi][4]=random;
+\[Eta][1]=random;
+\[Eta][4]=random;
+\[Xi]t[1+n]=random;
+\[Xi]t[2+n]=random;
+
+(*Depending on whether a parametric expression is required or not, we set the other variables to either a parameter or a number*)
+
+If[TrueQ[OptionValue[Parametric]],
+(*Parametric components*)
+par=OptionValue[ParameterName];
+\[Eta]t[3]=par[1];
+\[Eta]t[4]=par[2];
+\[Xi]t[4]=par[3];
+\[Xi]t[3+n]=par[4];
+\[Xi]t[4+n]=par[5];
+count=6;
+Do[
+\[Xi][i]=par[count++];
+\[Eta][i]=par[count++];
+\[Xi]t[i]=par[count++];
+\[Eta]t[i]=par[count++];
+\[Xi]t[i+n]=par[count++];
+,{i,5,n}];
+,
+(*Numeric components*)
+\[Eta]t[3]=random;
+\[Eta]t[4]=random;
+\[Xi]t[4]=random;
+\[Xi]t[3+n]=random;
+\[Xi]t[4+n]=random;
+Do[
+\[Xi][i]=random;
+\[Eta][i]=random;
+\[Xi]t[i]=random;
+\[Eta]t[i]=random;
+\[Xi]t[i+n]=random;
+,{i,5,n}];
+];
+
+(*Fix the required msasses to be the same*)
+count=1;
+Do[
+(*\[Xi]t[count+n]=random;*)
+Do[
+\[Xi]t[i+n]=(-\[Eta][-1+i+n] \[Eta]t[-1+i+n] \[Xi][-1+i] \[Xi]t[-1+i]+\[Eta][-1+i] \[Eta]t[-1+i+n] \[Xi][-1+i+n] \[Xi]t[-1+i]+\[Eta][i+n] \[Eta]t[i+n] \[Xi][i] \[Xi]t[i]-\[Eta][i] \[Eta]t[i+n] \[Xi][i+n] \[Xi]t[i]+\[Eta][-1+i+n] \[Eta]t[-1+i] \[Xi][-1+i] \[Xi]t[-1+i+n]-\[Eta][-1+i] \[Eta]t[-1+i] \[Xi][-1+i+n] \[Xi]t[-1+i+n])/(\[Eta]t[i] (\[Eta][i+n] \[Xi][i]-\[Eta][i] \[Xi][i+n]));
+,{i,count+1,count+k-1}];
+count=count+k;
+,{k,samemass}];
+
+(*Generate momentum conservation:*)
+system={Sum[\[Xi][i]\[Xi]t[i],{i,2*n}]==0,Sum[\[Xi][i]\[Eta]t[i],{i,2*n}]==0,Sum[\[Eta][i]\[Xi]t[i],{i,2*n}]==0,Sum[\[Eta][i]\[Eta]t[i],{i,2*n}]==0(*,Sum[\[Xi][i]\[Eta][i+n]-\[Xi][i+n]\[Eta][i],{i,n}]==0,Sum[\[Eta]t[i+n]\[Xi]t[i]-\[Xi]t[i+n]\[Eta]t[i],{i,n}]==0*)};
+
+Table[{\[Xi][i],\[Xi]t[i],\[Eta][i],\[Eta]t[i]},{i,2n}]//Echo;
+(*Solve momentum conservation*)
+sol=Solve[system,{\[Xi][1],\[Xi][2],\[Eta][2],\[Xi]t[3](*,\[Xi]t[1+n],\[Xi]t[2+n]*)}];
+
+(*Safety check*)
+If[sol==={},
+Message[GenSpinors::unsolvablekinematics];
+Throw[$Failed],
+sol=sol//First;
+];
+
+(*Now that all the spinor components have been generated we just need to return them in a suitably packaged output. The oupt will be divided into 6D and 4D and then further into {\[Lambda],\[Lambda]t,\[Lambda]',\[Lambda]t'}. Notice that these spinors will be considered all having upper indices so the spinors will be like \[Lambda]=\[LeftAngleBracket]\[Lambda]| and \[Lambda]t=|\[Lambda]t].*)
+
+(*List of the 6D spinors*)
+out=Table[{{\[Xi][i],\[Eta][i]},{\[Xi]t[i],\[Eta]t[i]},{\[Xi][i+n],\[Eta][i+n]},{\[Xi]t[i+n],\[Eta]t[i+n]}},{i,n-fourD}];
+
+(*Then append the table of the 4D components and replece the solutions to momentum conservation*)
+out={out,Table[{{\[Xi][i],\[Eta][i]},{\[Xi]t[i],\[Eta]t[i]}},{i,n-fourD+1,n}]}/.sol;
+
+
+Return[out];
+];
+];*)
+
+
+(*Second attempt, improved but beyond a certain number of equal masses square roots appear again*)
+
+(*Options[GenerateKinematics]={RationalKinematics->True,ParameterRange->1000,Parametric->False,ParameterName->$par}
+{RationalKinematics->True,ParameterRange->1000,Parametric->False,ParameterName->$par}
+
+(*Samemass is a list of integers representing the number of masses which have been requested as to be the same*)
+
+GenerateKinematics[total_Integer,fourD_Integer,samemass_List,OptionsPattern[]]:=Catch[Module[{\[Xi],\[Eta],\[Xi]t,\[Eta]t,n,random,system,sol,par,count,out},
+
+(*First we check that total \[GreaterEqual] fourD+2 *)
+If[total<fourD+2,Throw["Please check input, impossible kinematics has been requested."];
+];
+
+(*The number of masses required to be the same must be less or equal to the total number of masses*)
+If[total-fourD<Total@samemass,Throw["Please check input, impossible kinematics has been requested."];
+];
+
+n=total;
+
+(*Next fix the components of the four-dimensional massless spinors*)
+Do[
+\[Xi][i+n]=0;
+\[Eta][i+n]=0;
+\[Eta]t[i+n]=\[Eta]t[i]*\[Xi]t[i+n]/\[Xi]t[i];
+,{i,n-fourD+1,n}];
+(*Do[
+\[Xi][i+n]=0;
+\[Eta][i+n]=0;
+\[Eta]t[i+n]=0;
+\[Xi]t[i+n]=0;
+,{i,n-fourD+1,n}];*)
+
+(*Based on the options given assign rational rather than real kinematics and the range of the interval over which to generate it*)
+If[TrueQ[OptionValue[RationalKinematics]],
+random:=RandomInteger[OptionValue[ParameterRange]],
+random:=RandomReal[OptionValue[ParameterRange]];
+];
+
+(*Next generate the random spinor components. First the 3n*)
+
+Do[
+\[Xi][i+n]=random;
+\[Eta][i+n]=random;
+\[Eta]t[i+n]=random;
+,{i,n-fourD}];
+
+(*Then the 9 + the 2 for which we do not solve momcon in 4d:*)
+\[Eta]t[1]=random;
+\[Eta]t[2]=random;
+\[Xi]t[1]=random;
+\[Xi]t[2]=random;
+\[Xi][3]=random;
+\[Eta][3]=random;
+(*\[Xi][4]=random;*)
+\[Xi][2]=random;
+\[Eta][1]=random;
+\[Eta][4]=random;
+\[Xi]t[1+n]=random;
+\[Xi]t[2+n]=random;
+
+(*Depending on whether a parametric expression is required or not, we set the other variables to either a parameter or a number*)
+
+If[TrueQ[OptionValue[Parametric]],
+(*Parametric components*)
+par=OptionValue[ParameterName];
+\[Eta]t[3]=par[1];
+\[Eta]t[4]=par[2];
+\[Xi]t[4]=par[3];
+\[Xi]t[3+n]=par[4];
+\[Xi]t[4+n]=par[5];
+count=6;
+Do[
+\[Xi][i]=par[count++];
+\[Eta][i]=par[count++];
+\[Xi]t[i]=par[count++];
+\[Eta]t[i]=par[count++];
+\[Xi]t[i+n]=par[count++];
+,{i,5,n}];
+,
+(*Numeric components*)
+\[Eta]t[3]=random;
+\[Eta]t[4]=random;
+\[Xi]t[4]=random;
+\[Xi]t[3+n]=random;
+\[Xi]t[4+n]=random;
+Do[
+\[Xi][i]=random;
+\[Eta][i]=random;
+\[Xi]t[i]=random;
+\[Eta]t[i]=random;
+\[Xi]t[i+n]=random;
+,{i,5,n}];
+];
+
+(*Fix the required msasses to be the same*)
+count=1;
+(*Do[
+(*\[Xi]t[count+n]=random;*)
+Do[
+\[Xi]t[i+n]=(-\[Eta][-1+i+n] \[Eta]t[-1+i+n] \[Xi][-1+i] \[Xi]t[-1+i]+\[Eta][-1+i] \[Eta]t[-1+i+n] \[Xi][-1+i+n] \[Xi]t[-1+i]+\[Eta][i+n] \[Eta]t[i+n] \[Xi][i] \[Xi]t[i]-\[Eta][i] \[Eta]t[i+n] \[Xi][i+n] \[Xi]t[i]+\[Eta][-1+i+n] \[Eta]t[-1+i] \[Xi][-1+i] \[Xi]t[-1+i+n]-\[Eta][-1+i] \[Eta]t[-1+i] \[Xi][-1+i+n] \[Xi]t[-1+i+n])/(\[Eta]t[i] (\[Eta][i+n] \[Xi][i]-\[Eta][i] \[Xi][i+n]));
+,{i,count+1,count+k-1}];
+count=count+k;
+,{k,samemass}];*)
+
+Do[
+Do[
+\[Xi]t[i+n]=(-\[Eta][count+n] \[Eta]t[count+n] \[Xi][count] \[Xi]t[count]+\[Eta][count] \[Eta]t[count+n] \[Xi][count+n] \[Xi]t[count]+\[Eta][i+n] \[Eta]t[i+n] \[Xi][i] \[Xi]t[i]-\[Eta][i] \[Eta]t[i+n] \[Xi][i+n] \[Xi]t[i]+\[Eta][count+n] \[Eta]t[count] \[Xi][count] \[Xi]t[count+n]-\[Eta][count] \[Eta]t[count] \[Xi][count+n] \[Xi]t[count+n])/(\[Eta]t[i] (\[Eta][i+n] \[Xi][i]-\[Eta][i] \[Xi][i+n]));
+,{i,count+1,count+k-1}];
+count=count+k;
+,{k,samemass}];
+
+(*Generate momentum conservation:*)
+system={Sum[\[Xi][i]\[Xi]t[i],{i,2*n}]==0,Sum[\[Xi][i]\[Eta]t[i],{i,2*n}]==0,Sum[\[Eta][i]\[Xi]t[i],{i,2*n}]==0,Sum[\[Eta][i]\[Eta]t[i],{i,2*n}]==0(*,Sum[\[Xi][i]\[Eta][i+n]-\[Xi][i+n]\[Eta][i],{i,n}]==0,Sum[\[Eta]t[i+n]\[Xi]t[i]-\[Xi]t[i+n]\[Eta]t[i],{i,n}]==0*)};
+
+Table[{\[Xi][i],\[Xi]t[i],\[Eta][i],\[Eta]t[i]},{i,2n}]//Echo;
+(*Solve momentum conservation*)
+sol=Solve[system,{\[Xi][1],\[Xi][4],\[Eta][2],\[Xi]t[3](*,\[Xi]t[1+n],\[Xi]t[2+n]*)}];
+
+(*Safety check*)
+If[sol==={},
+Message[GenSpinors::unsolvablekinematics];
+Throw[$Failed],
+sol=sol//First;
+];
+
+(*Now that all the spinor components have been generated we just need to return them in a suitably packaged output. The oupt will be divided into 6D and 4D and then further into {\[Lambda],\[Lambda]t,\[Lambda]',\[Lambda]t'}. Notice that these spinors will be considered all having upper indices so the spinors will be like \[Lambda]=\[LeftAngleBracket]\[Lambda]| and \[Lambda]t=|\[Lambda]t].*)
+
+(*List of the 6D spinors*)
+out=Table[{{\[Xi][i],\[Eta][i]},{\[Xi]t[i],\[Eta]t[i]},{\[Xi][i+n],\[Eta][i+n]},{\[Xi]t[i+n],\[Eta]t[i+n]}},{i,n-fourD}];
+
+(*Then append the table of the 4D components and replece the solutions to momentum conservation*)
+out={out,Table[{{\[Xi][i],\[Eta][i]},{\[Xi]t[i],\[Eta]t[i]}},{i,n-fourD+1,n}]}/.sol;
+
+
+Return[out];
+];
+];*)
+
+
+Options[GenerateKinematics]={RationalKinematics->True,ParameterRange->1000,Parametric->False,ParameterName->$par}
+{RationalKinematics->True,ParameterRange->1000,Parametric->False,ParameterName->$par}
+
+(*Samemass is a list of integers representing the number of masses which have been requested as to be the same*)
+
+GenerateKinematics[total_Integer,fourD_Integer,samemass_List,OptionsPattern[]]:=Catch[Module[{\[Xi],\[Eta],\[Xi]t,\[Eta]t,n,random,system,sol,par,count,out},
+
+(*First we check that total \[GreaterEqual] fourD+2 *)
+If[total<fourD+2,Throw["Please check input, impossible kinematics has been requested."];
+];
+
+(*The number of masses required to be the same must be less or equal to the total number of masses*)
+If[total-fourD<Total@samemass,Throw["Please check input, impossible kinematics has been requested."];
+];
+
+n=total;
+
+(*Next fix the components of the four-dimensional massless spinors*)
+Do[
+\[Xi][i+n]=0;
+\[Eta][i+n]=0;
+\[Eta]t[i+n]=\[Eta]t[i]*\[Xi]t[i+n]/\[Xi]t[i];
+,{i,n-fourD+1,n}];
+(*Do[
+\[Xi][i+n]=0;
+\[Eta][i+n]=0;
+\[Eta]t[i+n]=0;
+\[Xi]t[i+n]=0;
+,{i,n-fourD+1,n}];*)
+
+(*Based on the options given assign rational rather than real kinematics and the range of the interval over which to generate it*)
+If[TrueQ[OptionValue[RationalKinematics]],
+random:=RandomInteger[OptionValue[ParameterRange]],
+random:=RandomReal[OptionValue[ParameterRange]];
+];
+
+(*Next generate the random spinor components. First the 3n*)
+
+Do[
+\[Xi][i+n]=random;
+\[Eta][i+n]=random;
+\[Eta]t[i+n]=random;
+,{i,n-fourD}];
+
+(*Then the 9 + the 2 for which we do not solve momcon in 4d:*)
+\[Eta]t[1]=random;
+\[Eta]t[2]=random;
+\[Xi]t[1]=random;
+\[Xi]t[2]=random;
+\[Xi][3]=random;
+\[Eta][3]=random;
+(*\[Xi][4]=random;*)
+\[Xi][2]=random;
+\[Eta][1]=random;
+\[Eta][4]=random;
+\[Xi]t[1+n]=random;
+\[Xi]t[2+n]=random;
+
+(*Depending on whether a parametric expression is required or not, we set the other variables to either a parameter or a number*)
+
+If[TrueQ[OptionValue[Parametric]],
+(*Parametric components*)
+par=OptionValue[ParameterName];
+\[Eta]t[3]=par[1];
+\[Eta]t[4]=par[2];
+\[Xi]t[4]=par[3];
+\[Xi]t[3+n]=par[4];
+\[Xi]t[4+n]=par[5];
+count=6;
+Do[
+\[Xi][i]=par[count++];
+\[Eta][i]=par[count++];
+\[Xi]t[i]=par[count++];
+\[Eta]t[i]=par[count++];
+\[Xi]t[i+n]=par[count++];
+,{i,5,n}];
+,
+(*Numeric components*)
+\[Eta]t[3]=random;
+\[Eta]t[4]=random;
+\[Xi]t[4]=random;
+\[Xi]t[3+n]=random;
+\[Xi]t[4+n]=random;
+Do[
+\[Xi][i]=random;
+\[Eta][i]=random;
+\[Xi]t[i]=random;
+\[Eta]t[i]=random;
+\[Xi]t[i+n]=random;
+,{i,5,n}];
+];
+
+(*Fix the required masses to be the same. We do so by fixing the two arbitrary variables below*)
+count=1;
+
+Do[
+Do[
+\[Xi][i+n]=(-\[Eta][count+n] \[Xi][count]+\[Eta][i+n] \[Xi][i]+\[Eta][count] \[Xi][count+n])/\[Eta][i];
+\[Xi]t[i+n]=(-\[Eta]t[count+n] \[Xi]t[count]+\[Eta]t[i+n] \[Xi]t[i]+\[Eta]t[count] \[Xi]t[count+n])/\[Eta]t[i];
+,{i,count+1,count+k-1}];
+count=count+k;
+,{k,samemass}];
+
+(*Generate momentum conservation:*)
+system={Sum[\[Xi][i]\[Xi]t[i],{i,2*n}]==0,Sum[\[Xi][i]\[Eta]t[i],{i,2*n}]==0,Sum[\[Eta][i]\[Xi]t[i],{i,2*n}]==0,Sum[\[Eta][i]\[Eta]t[i],{i,2*n}]==0};
+
+(*Table[{\[Xi][i],\[Xi]t[i],\[Eta][i],\[Eta]t[i]},{i,2n}]//Echo;*)
+(*Solve momentum conservation*)
+sol=Solve[system,{\[Xi][1],\[Xi][4],\[Eta][2],\[Xi]t[3]}];
+
+(*Safety check*)
+If[sol==={},
+Message[GenSpinors::unsolvablekinematics];
+Throw[$Failed],
+sol=sol//First;
+];
+
+(*Now that all the spinor components have been generated we just need to return them in a suitably packaged output. The oupt will be divided into 6D and 4D and then further into {\[Lambda],\[Lambda]t,\[Lambda]',\[Lambda]t'}. Notice that these spinors will be considered all having upper indices so the spinors will be like \[Lambda]=\[LeftAngleBracket]\[Lambda]| and \[Lambda]t=|\[Lambda]t].*)
+
+(*List of the 6D spinors*)
+out=Table[{{\[Xi][i],\[Eta][i]},{\[Xi]t[i],\[Eta]t[i]},{\[Xi][i+n],\[Eta][i+n]},{\[Xi]t[i+n],\[Eta]t[i+n]}},{i,n-fourD}];
+
+(*Then append the table of the 4D components and replece the solutions to momentum conservation*)
+out={out,Table[{{\[Xi][i],\[Eta][i]},{\[Xi]t[i],\[Eta]t[i]}},{i,n-fourD+1,n}]}/.sol;
+
 
 Return[out];
 ];
@@ -578,14 +981,14 @@ Return[Table[{lam[i],lamtil[i]},{i,3}]];
 (*GenSpinorsAux*)
 
 
-Options[GenSpinorsAux]={RationalKinematics->True,ParameterRange->1000,Parametric->False,ParameterName->$par,Seed->False,Dimension->6,DisplaySpinors->False,SetMomentum->{}};
+Options[GenSpinorsAux]={RationalKinematics->True,ParameterRange->1000,Parametric->False,ParameterName->$par,Seed->False,Dimension->6,DisplaySpinors->False,SetMomentum->{},SameMasses->{}};
 
 GenSpinors::parametric="Sorry, the option Parametric is not yet supported in the requested kinematics.";
 
 GenSpinors::notsupported="Sorry, the requested kinematics is not supported in the current version.";
 
 
-GenSpinorsAux[labels_List,OptionsPattern[]]:=Catch[Module[{lab4,lab6,type,ra,rs,la,ls,\[Xi],\[Xi]t,\[Eta],\[Eta]t,kinem,n,kinem2},
+(*GenSpinorsAux[labels_List,OptionsPattern[]]:=Catch[Module[{lab4,lab6,type,ra,rs,la,ls,\[Xi],\[Xi]t,\[Eta],\[Eta]t,kinem,n,kinem2},
 
 (*First of all, clear all the stored values of non-fundamental building blocks, like angle and square brackets and so on. This is achieved with ClearDownValues and ClearSubValues*)
 ClearDependentKinematics[];
@@ -713,6 +1116,170 @@ Return["Numerical kinematics has been generated."];
 
 
 ];
+];*)
+
+
+GenSpinors::duplicatemasses="There are duplicate labels among the masses given in the option SameMasses, option ignored."
+
+GenSpinorsAux[labels_List,OptionsPattern[]]:=Catch[Module[{lab4,lab6,type,ra,rs,la,ls,\[Xi],\[Xi]t,\[Eta],\[Eta]t,kinem,n,kinem2,samemasses},
+
+(*First of all, clear all the stored values of non-fundamental building blocks, like angle and square brackets and so on. This is achieved with ClearDownValues and ClearSubValues*)
+ClearDependentKinematics[];
+
+(*If labels is a list of two lists, then the first one is to be treated as the list of 6D momenta and the second one as the list of 4D momenta. If the option Dimension is set to 4 then all the momenta are considered 4 dimensional. The variable type is flag for the 3 different cases*)
+Which[
+OptionValue[Dimension]===4,
+lab4=labels;
+lab6={};
+(*Pure 4D*)
+type=0;
+,
+MatchQ[labels,{_List,_List}],
+lab6=labels[[1]];
+lab4=labels[[2]];
+(*Mixed kinematics*)
+type=1;
+(*If the list of 6D momenta is epty, this is equivalent to case 1*)
+If[lab6==={},type=0;];
+,
+True,
+lab6=labels;
+lab4={};
+(*Pure 6D*)
+type=2;
+];
+
+(*If the number of massive momenta is non-vanishing sort the labels accordingly*)
+If[AllTrue[OptionValue[SameMasses],Head[#]===List&],
+samemasses=OptionValue[SameMasses];
+,
+samemasses={OptionValue[SameMasses]}
+];
+If[samemasses=!={{}},
+(*Check that all masses are indeed among the massive labels. First drop all elements declared as massles*)
+samemasses=DeleteCases[#,_?(MemberQ[lab4,#]&)]&/@samemasses;
+(*Next drop all the instances where there is a single element in the list, since we do not need to do anything there*)
+samemasses=DeleteCases[samemasses,_?(Length[#]==1&)];
+(*Check there are no duplicates*)
+If[Length@Flatten[samemasses]>Length@DeleteDuplicates[Flatten[samemasses]],
+Message[GenSpinors::duplicatemasses];
+samemasses={{}};
+];
+
+(*Reorder the labels*)
+lab6=Join[Flatten[samemasses],Complement[lab6,Flatten[samemasses]]];
+];
+
+(*If Seed has been defined then SeedRandom*)
+If[MatchQ[Head[OptionValue[Seed]],Integer|String],
+SeedRandom[OptionValue[Seed]];
+];
+
+(*Definition of the spinors in terms of the components. In the six-dimensional case there will be 2n of these spinors, where the first n refer to \[Lambda] and the second n to \[Lambda]' which is redefinition of the \[Mu] encoding also the masses, see package documentation.*)
+	ra[i_]:={-\[Xi][i],\[Eta][i]}(*|i>*);
+		   rs[i_]:={\[Xi]t[i],\[Eta]t[i]}(*|i]*);
+		   la[i_]:={\[Eta][i],\[Xi][i]}(*<i|*);
+		   ls[i_]:={-\[Eta]t[i],\[Xi]t[i]}(*[i|*);
+
+(*Now actually generate the kinematics, depending on whether there are fixed momenta or not and the dimension we call different functions.*)
+
+If[OptionValue[SetMomentum]==={},
+(*Generate all momenta from scratch*)
+Which[
+type===0,
+(*Pure 4D*)
+n=Length[lab4];
+kinem=Table[{la[i],rs[i]},{i,n}];
+kinem2=GenerateKinematics4D[n,{RationalKinematics->OptionValue[RationalKinematics],ParameterRange->OptionValue[ParameterRange],Parametric->OptionValue[Parametric],ParameterName->OptionValue[ParameterName]}];
+If[kinem2===$Failed,Throw[kinem2]];
+Evaluate[kinem]=kinem2;
+,
+type===1,
+(*Mixed*)
+n=Length[lab4]+Length[lab6];
+kinem={Table[{la[i],rs[i],la[i+n],rs[i+n]},{i,Length[lab6]}],Table[{la[i],rs[i]},{i,Length[lab6]+1,n}]};
+kinem2=GenerateKinematics[n,Length[lab4],Length/@samemasses,{RationalKinematics->OptionValue[RationalKinematics],ParameterRange->OptionValue[ParameterRange],Parametric->OptionValue[Parametric],ParameterName->OptionValue[ParameterName]}];
+If[kinem2===$Failed,Throw[kinem2]];
+Evaluate[kinem]=kinem2;
+,
+type===2,
+(*Pure 6D*)
+n=Length[lab6];
+kinem={Table[{la[i],rs[i],la[i+n],rs[i+n]},{i,n}],{}};
+kinem2=GenerateKinematics[n,0,{0},{RationalKinematics->OptionValue[RationalKinematics],ParameterRange->OptionValue[ParameterRange],Parametric->OptionValue[Parametric],ParameterName->OptionValue[ParameterName]}];
+If[kinem2===$Failed,Throw[kinem2]];
+Evaluate[kinem]=kinem2;
+];
+,
+(*Some of the spinors are fixed a priori*)
+Which[
+type===0,
+(*Pure 4D*)
+n=Length[lab4];
+kinem=Table[{la[i],rs[i]},{i,n}];
+kinem2=GenerateKinematicsFixed4D[n,If[(!Head[OptionValue[SetMomentum]]===List)||MatchQ[OptionValue[SetMomentum],{{_,_},{_,_}}],{OptionValue[SetMomentum]},OptionValue[SetMomentum]],{RationalKinematics->OptionValue[RationalKinematics],ParameterRange->OptionValue[ParameterRange]}];
+If[TrueQ[OptionValue[Parametric]],
+Message[GenSpinors::parametric];
+];
+If[kinem2===$Failed,Throw[kinem2]];
+Evaluate[kinem]=kinem2;
+,
+type===1,
+Message[GenSpinors::notsupported],
+type===2,
+Message[GenSpinors::notsupported]
+];
+];
+
+(*Finally relate the generated kinematics to the spinor labels:*)
+(*6D part*)
+Do[
+		(*\[Lambda] spinors*)
+		SpinorUndotN[lab6[[i]]][$lam][$up]=la[i];
+		SpinorUndotN[lab6[[i]]][$lam][$down]=ra[i];
+		SpinorDotN[lab6[[i]]][$lam][$down]=ls[i];
+		SpinorDotN[lab6[[i]]][$lam][$up]=rs[i];
+		(*\[Mu] spinors*)
+		SpinorUndotN[lab6[[i]]][$mu][$up]=la[i+n];
+		SpinorUndotN[lab6[[i]]][$mu][$down]=ra[i+n];
+		SpinorDotN[lab6[[i]]][$mu][$down]=ls[i+n];
+		SpinorDotN[lab6[[i]]][$mu][$up]=rs[i+n];
+		(*Masses:*)
+		ExtramassN[lab6[[i]]]=la[i] . ra[i+n];
+		ExtramasstildeN[lab6[[i]]]=ls[i+n] . rs[i];
+		,{i,Length[lab6]}];
+(*4D part*)
+Do[
+		(*\[Lambda] spinors*)
+		SpinorUndotN[lab4[[i]]][$lam][$up]=la[i+Length[lab6]];
+		SpinorUndotN[lab4[[i]]][$lam][$down]=ra[i+Length[lab6]];
+		SpinorDotN[lab4[[i]]][$lam][$down]=ls[i+Length[lab6]];
+		SpinorDotN[lab4[[i]]][$lam][$up]=rs[i+Length[lab6]];
+		(*Initialise the \[Mu] spinors to {Null,Null} for consistency reasons*)
+		(*SpinorUndotN[lab4[[i]]][$mu][$up]={Null,Null};
+		SpinorUndotN[lab4[[i]]][$mu][$down]={Null,Null};
+		SpinorDotN[lab4[[i]]][$mu][$down]={Null,Null};
+		SpinorDotN[lab4[[i]]][$mu][$up]={Null,Null};*)
+		(*Initialise to zero*)
+		SpinorUndotN[lab4[[i]]][$mu][$up]={0,0};
+		SpinorUndotN[lab4[[i]]][$mu][$down]={0,0};
+		SpinorDotN[lab4[[i]]][$mu][$down]={0,0};
+		SpinorDotN[lab4[[i]]][$mu][$up]={0,0};
+		(*Masses to zero:*)
+		ExtramassN[lab4[[i]]]=0;
+		ExtramasstildeN[lab4[[i]]]=0;
+		,{i,Length[lab4]}];
+
+(*If DisplaySpinors is set to True display the generated kinematics*)
+If[OptionValue[DisplaySpinors],
+Print["Output reads {|\[Lambda]\[RightAngleBracket],|\[Lambda]],|\[Mu]\[RightAngleBracket],|\[Mu]]} and {|\[Lambda]\[RightAngleBracket],|\[Lambda]]} for massive and massless spinors respectively."];
+Return[DeleteCases[{Table[{ra[i],rs[i],ra[i+n],rs[i+n]},{i,Length[lab6]}],Table[{ra[i],rs[i]},{i,Length[lab6]+1,n}]},{}]];
+,
+Return["Numerical kinematics has been generated."];
+];
+
+
+];
 ];
 
 
@@ -720,7 +1287,7 @@ Return["Numerical kinematics has been generated."];
 (*GenSpinors*)
 
 
-Options[GenSpinors]={RationalKinematics->True,ParameterRange->1000,Parametric->False,ParameterName->$par,Seed->False,Dimension->6,DisplaySpinors->False,SetMomentum->{},Type3pt->$angle};
+Options[GenSpinors]={RationalKinematics->True,ParameterRange->1000,Parametric->False,ParameterName->$par,Seed->False,Dimension->6,DisplaySpinors->False,SetMomentum->{},Type3pt->$angle,SameMasses->{}};
 
 
 GenSpinors[labels_List,OptionsPattern[]]:=Module[{test,out,labels3pt},
@@ -797,10 +1364,62 @@ Break[];
 ,
 True,
 (*Proceed with the higher point kinematics generation*)
-test=KinematicCheck[out=GenSpinorsAux[labels,{RationalKinematics->OptionValue[RationalKinematics],ParameterRange->OptionValue[ParameterRange],Parametric->OptionValue[Parametric],ParameterName->OptionValue[ParameterName],Seed->OptionValue[Seed],Dimension->OptionValue[Dimension],DisplaySpinors->OptionValue[DisplaySpinors],SetMomentum->OptionValue[SetMomentum]}]];
+test=KinematicCheck[out=GenSpinorsAux[labels,{RationalKinematics->OptionValue[RationalKinematics],ParameterRange->OptionValue[ParameterRange],Parametric->OptionValue[Parametric],ParameterName->OptionValue[ParameterName],Seed->OptionValue[Seed],Dimension->OptionValue[Dimension],DisplaySpinors->OptionValue[DisplaySpinors],SetMomentum->OptionValue[SetMomentum],SameMasses->OptionValue[SameMasses]}]];
 ];
 ];
 Return[out];
+];
+
+
+(* ::Subsection::Closed:: *)
+(*SpinorUndotN and SpinorDotN*)
+
+
+SpinorDotN[OverBar[p_]][type_][pos_]:=SpinorDotN[OverBar[p]][type][pos]=SpinorDotN[p][$mu][pos];
+SpinorUndotN[OverBar[p_]][type_][pos_]:=SpinorUndotN[OverBar[p]][type][pos]=SpinorUndotN[p][$mu][pos];
+
+
+(* ::Subsection::Closed:: *)
+(*SpinorAngleBracketN*)
+
+
+SpinorAngleBracketN[x_,y_]:=SpinorAngleBracketN[x,y]=SpinorUndotN[x][$lam][$up] . SpinorUndotN[y][$lam][$down];
+SpinorAngleBracketN[x_,OverBar[y_]]:=SpinorAngleBracketN[x,OverBar[y]]=SpinorUndotN[x][$lam][$up] . SpinorUndotN[y][$mu][$down];
+SpinorAngleBracketN[OverBar[x_],y_]:=SpinorAngleBracketN[OverBar[x],y]=SpinorUndotN[x][$mu][$up] . SpinorUndotN[y][$lam][$down];
+SpinorAngleBracketN[OverBar[x_],OverBar[y_]]:=SpinorAngleBracketN[OverBar[x],OverBar[y]]=SpinorUndotN[x][$mu][$up] . SpinorUndotN[y][$mu][$down];
+
+
+(* ::Subsection::Closed:: *)
+(*SpinorSquareBracketN*)
+
+
+SpinorSquareBracketN[x_,y_]:=SpinorSquareBracketN[x,y]=SpinorDotN[x][$lam][$down] . SpinorDotN[y][$lam][$up];
+SpinorSquareBracketN[x_,OverBar[y_]]:=SpinorSquareBracketN[x,OverBar[y]]=SpinorDotN[x][$lam][$down] . SpinorDotN[y][$mu][$up];
+SpinorSquareBracketN[OverBar[x_],y_]:=SpinorSquareBracketN[OverBar[x],y]=SpinorDotN[x][$mu][$down] . SpinorDotN[y][$lam][$up];
+SpinorSquareBracketN[OverBar[x_],OverBar[y_]]:=SpinorSquareBracketN[OverBar[x],OverBar[y]]=SpinorDotN[x][$mu][$down] . SpinorDotN[y][$mu][$up];
+
+
+(* ::Subsection::Closed:: *)
+(*ChainN*)
+
+
+ChainN[type1_,p1_,{p2__},p3_,type2_]:=ChainN[type1,p1,{p2},p3,type2]=Module[{loc,momenta,pos,count},
+If[type2===$square,
+loc=SpinorDotN[p3][$lam][$up];
+count=0;
+,
+loc=SpinorUndotN[p3][$lam][$down];
+count=1;
+];
+pos[n_?OddQ]:=$up;
+pos[n_?EvenQ]:=$down;
+Do[loc=MomMat4DN[i][pos[count++]] . loc,{i,Reverse[{p2}]}];
+If[type1===$angle,
+loc=SpinorUndotN[p1][$lam][$up] . loc;
+,
+loc=SpinorDotN[p1][$lam][$down] . loc;
+];
+Return[loc];
 ];
 
 

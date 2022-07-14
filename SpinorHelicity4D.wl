@@ -4,7 +4,7 @@
 (*SpinorHelicity4D*)
 
 
-BeginPackage["SpinorHelicity4D`",{"SpinorBuildingBlocks`"}]
+BeginPackage["SpinorHelicity4D`",{"SpinorBuildingBlocks`","SpinorNumerics`"}]
 
 
 (*In order to allow the package to be reloaded we unprotect and clear all the symbol definitions*)
@@ -39,7 +39,7 @@ ChainSort::usage="ChainSort[exp,ordering_List] sorts momenta appearing in chains
 ChainSimplify::usage="ChainSimplify[exp,Options] uses properties of the chains to simplify them, reducing them to products of chains where a given momentum appears at most once and scalar products. It allows for the options MomCon and ReduceComplete. Notice that in order for the simplifications to work best the momenta should be first declared through DeclareMom and massless momenta should be specified by DeclareMassless."
 MomCon::usage="MomCon is an option for ChainSimplify which allows to use momentum conservation to simplify the chains. It must be defined as a list of replacements."
 ReduceBySorting::usage="ReduceBySorting is an option for ChainSimplify, default is False. If set to True the function will order the momenta inside the chains. If set to a list of the ordering will follow the order in the list instead of canonical order."
-epsSH::usage="epsSH[p1,p2,p3,p4] represents the a Levi-Civita tensor contracted into the four momenta p1,p2,p3,p4. These apper when converting spinor chains into Dirac traces with ToTrace."
+epsSH::usage="epsSH[p1,p2,p3,p4] represents the a Levi-Civita tensor contracted into the four momenta p1,p2,p3,p4. These appear when converting spinor chains into Dirac traces with ToTrace."
 TrG::usage="TrG[{p1,p2,...,pn}] computes the Dirac trace of the given list of slashed momenta."
 TrG5::usage="TrG5[{p1,p2,...,pn}] computes the Dirac trace of the given list of slashed momenta with a single \!\(\*SubscriptBox[\(\[Gamma]\), \(5\)]\) insertion at the first position."
 ToTrace::usage="ToTrace[exp] converts all closed chains of the form \[LeftAngleBracket]p|...|p] in exp into Dirac traces and evaluates them. It admits the Option EpsilonSimplify."
@@ -585,7 +585,6 @@ Return[locexp];
 
 (* ::Subsubsection:: *)
 (*toChainNew*)
-
 
 
 Options[PreChain]={ChainSelection->"RandomChain"};
