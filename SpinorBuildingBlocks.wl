@@ -755,7 +755,7 @@ Return[FixedInvariants//Sort];
 (*NewProcess*)
 
 
-NewProcess[]:=(ClearInvariants[];UndeclareMassless[];UndeclareMom[];);
+NewProcess[]:=(ClearInvariants[];UndeclareMassless[];UndeclareMom[];ClearKinematics;);
 
 
 (* ::Section:: *)

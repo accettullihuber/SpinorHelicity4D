@@ -17,8 +17,9 @@ ClearAll@@Names["SpinorNumerics`*"];
 
 
 
-GenSpinors::usage="GenSpinors[{x1,x2,...,xn},{Options}] generates numerical values for the spinors corresponding to on-shell, conserved, complex kinematics. The spinors are labelled by x1,x2,...,xn and the function allows for the following options: {Dimension,DisplaySpinors,Parametric,ParameterName,ParameterRange,RationalKinematics,Seed,SetMomentum,Type3pt}. For further details type ?OptionName."
-Dimension::usage="Dimension is an option for GenSpinors. It specifies the dimension of the generated kinematics. Default is 6, allowed are 6 and 4."
+GenSpinors::usage="GenSpinors[{{\!\(\*SubscriptBox[\(p\), \(1\)]\),...,\!\(\*SubscriptBox[\(p\), \(n\)]\)},{\!\(\*SubscriptBox[\(q\), \(1\)]\),...,\!\(\*SubscriptBox[\(q\), \(m\)]\)}},{Options}] generates numerical values for the spinors corresponding to on-shell, conserved, complex kinematics. The labels \!\(\*SubscriptBox[\(p\), \(i\)]\) correspond to massive particles and the \!\(\*SubscriptBox[\(q\), \(j\)]\) to massless ones. The input GenSpinors[{\!\(\*SubscriptBox[\(k\), \(1\)]\),...,\!\(\*SubscriptBox[\(k\), \(m\)]\)}] is also allowed and will generate spinors for massive particles if AllMassless is set to False, and all massless if it is set to True. The function allows for the following options: {AllMassless,DisplaySpinors,Parametric,ParameterName,ParameterRange,RationalKinematics,Seed,SetMomentum,Type3pt,SameMassess}. For further details type ?OptionName."
+AllMassless::usage="AllMassless is a boolean option for GenSpinors, default is False, If set to True all the entries of GenSpinors are considered as massless. AllMassless->True is equivalent to using the input GenSpinors[{{},{\!\(\*SubscriptBox[\(p\), \(1\)]\),...,\!\(\*SubscriptBox[\(p\), \(n\)]\)}}]."
+(*Dimension::usage="Dimension is an option for GenSpinors. It specifies the dimension of the generated kinematics. Default is 6, allowed are 6 and 4."*)
 DisplaySpinors::usage="DisplaySpinors is an option for GenSpinors. If set to True the generated kinematics is displayed. Default is False."
 Parametric::usage="Parametric is an option for GenSpinors. If set to True the kinematics is generated in terms of a minimal set of independent variables (3n-10 in 4 dimensions and 5n-15 is six-dimensions) instead of numbers. Default is False."
 ParameterName::usage="ParameterName is an option for GenSpinors. It allows to choose a custom label for the independent variables in terms of which the kinematics is defined if Parametric->True. Default is $par."
@@ -30,7 +31,7 @@ $par::usage="Protected symbol. It is the default name of the variables in GenSpi
 SetMomentum::usage="SetMomentum is an option for GenSpinors. It allows to set the numeric componenst of the first spinors to specific values. It allows as values spinor components as well as labels of already generated momenta."
 Type3pt::usage="Type3pt is an option for GenSpinors. When generating three-particle kinematics it allows to specify which king of brackets, angle or square, are non-vanishing. Default value is $angle."
 SameMasses::usage="SameMasses is an option for GenSpinors, which allows to set masses of different labels to be the same. Input form is either a list of labels {p1,p2,...,pn} or a list of lists {{\!\(\*SubscriptBox[\(p\), \(1\)]\),...,\!\(\*SubscriptBox[\(p\), \(n\)]\)},{\!\(\*SubscriptBox[\(p\), \(2\)]\),...,\!\(\*SubscriptBox[\(p\), \(k\)]\)},...} which sets \!\(\*SubscriptBox[\(m\), \(1\)]\)=...=\!\(\*SubscriptBox[\(m\), \(n\)]\), \!\(\*SubscriptBox[\(m\), \(2\)]\)=...=\!\(\*SubscriptBox[\(m\), \(k\)]\)"
-(*MomMat4DN::usage="MomMat4DN[label][type] is the numeric momentum written as a mtarix in spinor representation. Type is either $up or $down and represents the position of the spinor indices."
+(*MomMat4DN::usage="MomMat4DN[label][type] is the numeric momentum written as a matrix in spinor representation. Type is either $up or $down and represents the position of the spinor indices."
 Mom4DN::usage="Mom4DN[label] is the four-dimensional numeric momentum vector associated to label."
 MomMat6DN::usage="MomMat6DN[label][type] is the six-dimensional momentum matrix. The argument type represents the position of the Lorentz indices."
 Mom6DN::usage="Mom6DN[label] is the six-dimensional numeric momentum vector associated to label."
@@ -40,7 +41,7 @@ ClearKinematics::usage="ClearKinematics clears all the so far generated and stor
 (*ExtramassN::usage="ExtramassN[label] is the numerical equivalent of Extramass[label]."
 ExtramasstildeN::usage="ExtramasstildeN[label] is the numerical equivalent of Extramasstilde[label]."
 *)
-ToNum::usage="TuNum[exp] return numeric value of exp. It requires some kind of numerical kinematics to be generated first using GenSpinors."
+ToNum::usage="ToNum	[exp] return numeric value of exp. It requires some kind of numerical kinematics to be generated first using GenSpinors."
 
 
 
@@ -79,6 +80,13 @@ ClearDownValues[f_]:=DownValues[f]=DeleteCases[DownValues[f],_?(FreeQ[First[#],P
 ClearSubValues[f_]:=(SubValues[f]=DeleteCases[SubValues[f],_?(FreeQ[First[#],Pattern]&)]);
 
 
+(* ::Subsection::Closed:: *)
+(*InverseDot*)
+
+
+InverseDot[x_List,y_List]:=Table[i*j,{i,x},{j,y}];
+
+
 (* ::Section:: *)
 (*Kinematic generation in all the subcases*)
 
@@ -99,26 +107,28 @@ Attributes[KinematicCheck]={HoldAll};
 KinematicCheck[x_]:=TrueQ[Quiet[Check[x,$Failed,{PowerMod::ninv,Power::infy,Infinity::indet,Power::indet,GenSpinors::unsolvablekinematics}],{PowerMod::ninv,Power::infy,Infinity::indet,Power::indet,GenSpinors::unsolvablekinematics}]==$Failed];
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*ClearDependentKinematics*)
 
+
+(*This is just the same as ClearKinematics but private, it is a remnant of an old version. When I have time I'll remove this*)
 
 ClearDependentKinematics[]:=Block[{},
 
 (*Clearing functions with DownValues*)
-ClearDownValues[#]&/@{SpinorAngleBracketN,SpinorSquareBracketN,Mom4DN,ChainN,SNum};
+ClearDownValues[#]&/@{SpinorAngleBracketN,SpinorSquareBracketN,Mom4DN,ChainN,SNum,mpN};
 
 (*Clearing functions with SubValues*)
-ClearSubValues[#]&/@{MomMat4DN};
+ClearSubValues[#]&/@{SpinorUndotN,SpinorDotN,ExtramassN,ExtramasstildeN,MomMat4DN};
 
 ];
 
 
 (* ::Subsection:: *)
-(*ClearKinematics (? Extramass and Redefine 6D kinematics?)*)
+(*ClearKinematics*)
 
 
-ClearKinematics:=(ClearSubValues[SpinorUndotN];
+(*ClearKinematics:=(ClearSubValues[SpinorUndotN];
 ClearSubValues[SpinorDotN];
 ClearSubValues[ExtramassN];
 ClearSubValues[ExtramasstildeN];
@@ -126,17 +136,25 @@ ClearDownValues[SpinorAngleBracketN];
 ClearDownValues[SpinorSquareBracketN];
 
 ClearDependentKinematics[];
+);*)
 
-(*We now have to redefine the six-dimensional invariants*)
-RedefineNumerics6D[];
-);
+
+ClearKinematics:=Block[{},
+
+(*Clearing functions with DownValues*)
+ClearDownValues[#]&/@{SpinorAngleBracketN,SpinorSquareBracketN,Mom4DN,ChainN,SNum,mpN};
+
+(*Clearing functions with SubValues*)
+ClearSubValues[#]&/@{SpinorUndotN,SpinorDotN,ExtramassN,ExtramasstildeN,MomMat4DN};
+
+];
 
 
 (* ::Subsection:: *)
 (*Auxiliary functions for GenSpinors*)
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*GenerateKinematics*)
 
 
@@ -981,7 +999,7 @@ Return[Table[{lam[i],lamtil[i]},{i,3}]];
 (*GenSpinorsAux*)
 
 
-Options[GenSpinorsAux]={RationalKinematics->True,ParameterRange->1000,Parametric->False,ParameterName->$par,Seed->False,Dimension->6,DisplaySpinors->False,SetMomentum->{},SameMasses->{}};
+Options[GenSpinorsAux]={RationalKinematics->True,ParameterRange->1000,Parametric->False,ParameterName->$par,Seed->False,AllMassless->False,DisplaySpinors->False,SetMomentum->{},SameMasses->{}};
 
 GenSpinors::parametric="Sorry, the option Parametric is not yet supported in the requested kinematics.";
 
@@ -993,7 +1011,7 @@ GenSpinors::notsupported="Sorry, the requested kinematics is not supported in th
 (*First of all, clear all the stored values of non-fundamental building blocks, like angle and square brackets and so on. This is achieved with ClearDownValues and ClearSubValues*)
 ClearDependentKinematics[];
 
-(*If labels is a list of two lists, then the first one is to be treated as the list of 6D momenta and the second one as the list of 4D momenta. If the option Dimension is set to 4 then all the momenta are considered 4 dimensional. The variable type is flag for the 3 different cases*)
+(*If labels is a list of two lists, then the first one is to be treated as the list of 6D momenta and the second one as the list of 4D momenta. If the option AllMassless is set to True then all the momenta are considered as massless. The variable type is flag for the 3 different cases*)
 Which[
 OptionValue[Dimension]===4,
 lab4=labels;
@@ -1126,9 +1144,9 @@ GenSpinorsAux[labels_List,OptionsPattern[]]:=Catch[Module[{lab4,lab6,type,ra,rs,
 (*First of all, clear all the stored values of non-fundamental building blocks, like angle and square brackets and so on. This is achieved with ClearDownValues and ClearSubValues*)
 ClearDependentKinematics[];
 
-(*If labels is a list of two lists, then the first one is to be treated as the list of 6D momenta and the second one as the list of 4D momenta. If the option Dimension is set to 4 then all the momenta are considered 4 dimensional. The variable type is flag for the 3 different cases*)
+(*If labels is a list of two lists, then the first one is to be treated as the list of 6D momenta and the second one as the list of 4D momenta. If the option AllMassless is set to True then all the momenta are considered as massless. The variable type is flag for the 3 different cases*)
 Which[
-OptionValue[Dimension]===4,
+TrueQ[OptionValue[AllMassless]],
 lab4=labels;
 lab6={};
 (*Pure 4D*)
@@ -1156,8 +1174,8 @@ samemasses=OptionValue[SameMasses];
 samemasses={OptionValue[SameMasses]}
 ];
 If[samemasses=!={{}},
-(*Check that all masses are indeed among the massive labels. First drop all elements declared as massles*)
-samemasses=DeleteCases[#,_?(MemberQ[lab4,#]&)]&/@samemasses;
+(*Check that all masses are indeed among the massive labels. Drop all elements which are no declared among the massive labels*)
+samemasses=DeleteCases[#,_?(!MemberQ[lab6,#]&)]&/@samemasses;
 (*Next drop all the instances where there is a single element in the list, since we do not need to do anything there*)
 samemasses=DeleteCases[samemasses,_?(Length[#]==1&)];
 (*Check there are no duplicates*)
@@ -1287,7 +1305,7 @@ Return["Numerical kinematics has been generated."];
 (*GenSpinors*)
 
 
-Options[GenSpinors]={RationalKinematics->True,ParameterRange->1000,Parametric->False,ParameterName->$par,Seed->False,Dimension->6,DisplaySpinors->False,SetMomentum->{},Type3pt->$angle,SameMasses->{}};
+Options[GenSpinors]={RationalKinematics->True,ParameterRange->1000,Parametric->False,ParameterName->$par,Seed->False,AllMassless->False,DisplaySpinors->False,SetMomentum->{},Type3pt->$angle,SameMasses->{}};
 
 
 GenSpinors[labels_List,OptionsPattern[]]:=Module[{test,out,labels3pt},
@@ -1297,7 +1315,7 @@ test=True;
 While[test,
 
 (*Check if the required kinematics is singular (3pt) or not, also requires 4d kinematics*)
-Which[Length[labels3pt=labels]===3&&OptionValue[Dimension]===4,
+Which[Length[labels3pt=labels]===3&&TrueQ[OptionValue[AllMassless]],
 ClearDependentKinematics[];
 (*Generate kinematics*)
 test=KinematicCheck[out=GenKinematics3pt[OptionValue[Type3pt],{RationalKinematics->OptionValue[RationalKinematics],ParameterRange->OptionValue[ParameterRange],SetMomentum->OptionValue[SetMomentum]}]];
@@ -1364,7 +1382,7 @@ Break[];
 ,
 True,
 (*Proceed with the higher point kinematics generation*)
-test=KinematicCheck[out=GenSpinorsAux[labels,{RationalKinematics->OptionValue[RationalKinematics],ParameterRange->OptionValue[ParameterRange],Parametric->OptionValue[Parametric],ParameterName->OptionValue[ParameterName],Seed->OptionValue[Seed],Dimension->OptionValue[Dimension],DisplaySpinors->OptionValue[DisplaySpinors],SetMomentum->OptionValue[SetMomentum],SameMasses->OptionValue[SameMasses]}]];
+test=KinematicCheck[out=GenSpinorsAux[labels,{RationalKinematics->OptionValue[RationalKinematics],ParameterRange->OptionValue[ParameterRange],Parametric->OptionValue[Parametric],ParameterName->OptionValue[ParameterName],Seed->OptionValue[Seed],AllMassless->OptionValue[AllMassless],DisplaySpinors->OptionValue[DisplaySpinors],SetMomentum->OptionValue[SetMomentum],SameMasses->OptionValue[SameMasses]}]];
 ];
 ];
 Return[out];
@@ -1400,6 +1418,32 @@ SpinorSquareBracketN[OverBar[x_],OverBar[y_]]:=SpinorSquareBracketN[OverBar[x],O
 
 
 (* ::Subsection::Closed:: *)
+(*MomMat4D*)
+
+
+(*(*In order to avoid divergencies coming from us having set all the reference spinor components to zero, we have to have two distinc definitions*)
+MomMat4DN[label_][$up]:=MomMat4DN[label][$up]=If[ExtramassN[label]ExtramasstildeN[label]===0,
+InverseDot[SpinorDotN[label][$lam][$up],SpinorUndotN[label][$lam][$up]],
+InverseDot[SpinorDotN[label][$lam][$up],SpinorUndotN[label][$lam][$up]]-(ExtramassN[label]ExtramasstildeN[label])/(SpinorDotN[label][$lam][$down] . SpinorDotN[label][$mu][$up] SpinorUndotN[label][$lam][$up] . SpinorUndotN[label][$mu][$down])*InverseDot[SpinorDotN[label][$mu][$up],SpinorUndotN[label][$mu][$up]]
+];
+MomMat4DN[label_][$down]:=MomMat4DN[label][$down]=If[ExtramassN[label]ExtramasstildeN[label]===0,
+InverseDot[SpinorUndotN[label][$lam][$down],SpinorDotN[label][$lam][$down]],
+InverseDot[SpinorUndotN[label][$lam][$down],SpinorDotN[label][$lam][$down]]-(ExtramassN[label]ExtramasstildeN[label])/(SpinorDotN[label][$lam][$down] . SpinorDotN[label][$mu][$up] SpinorUndotN[label][$lam][$up] . SpinorUndotN[label][$mu][$down])*InverseDot[SpinorUndotN[label][$mu][$down],SpinorDotN[label][$mu][$down]]
+];*)
+
+
+MomMat4DN[label_][$up]:=MomMat4DN[label][$up]=InverseDot[SpinorDotN[label][$lam][$up],SpinorUndotN[label][$lam][$up]]+InverseDot[SpinorDotN[label][$mu][$up],SpinorUndotN[label][$mu][$up]];
+MomMat4DN[label_][$down]:=MomMat4DN[label][$down]=InverseDot[SpinorUndotN[label][$lam][$down],SpinorDotN[label][$lam][$down]]+InverseDot[SpinorUndotN[label][$mu][$down],SpinorDotN[label][$mu][$down]];
+
+
+(* ::Subsection:: *)
+(*Mom4DN*)
+
+
+Mom4DN[label_]:=Mom4DN[label]=1/2*{Tr[MomMat4DN[label][$up] . PauliMatrix[0]],Tr[MomMat4DN[label][$up] . PauliMatrix[1]],Tr[MomMat4DN[label][$up] . PauliMatrix[2]],Tr[MomMat4DN[label][$up] . PauliMatrix[3]]};
+
+
+(* ::Subsection:: *)
 (*ChainN*)
 
 
@@ -1423,29 +1467,22 @@ Return[loc];
 ];
 
 
-(* ::Subsection::Closed:: *)
-(*RedefineNumerics6D*)
+(* ::Subsection:: *)
+(*mpN*)
 
 
-(*This is an auxiliary function which gives the definitions for the *D numeric objects. This is needed because it is not possible to clear the stored values without clearing the definition itself.
-Or better it is possible but it is risky because if anything goes wrong at some point the error might not be cleared if we cleare only the numerical definitions. So to be on the safe side we clear completely the
-definition of the sidevalues and then define the functions a new.*)
-
-RedefineNumerics6D[]:=
-((*First the spinors*)
-SpinorUndot6DN[a_][$down][1]:=SpinorUndot6DN[a][$down][1]=({-((ExtramassN[a]*SpinorUndotN[a][$mu][$down])/SpinorAngleBracketN[a,OverBar[a]]),SpinorDotN[a][$lam][$up]}//Flatten);
-SpinorUndot6DN[a_][$down][2]:=SpinorUndot6DN[a][$down][2]=({SpinorUndotN[a][$lam][$down],-((ExtramasstildeN[a]*SpinorDotN[a][$mu][$up])/SpinorSquareBracketN[a,OverBar[a]])}//Flatten);
-SpinorDot6DN[a_][$down][1]:=SpinorDot6DN[a][$down][1]=({(ExtramasstildeN[a]*SpinorUndotN[a][$mu][$up])/SpinorAngleBracketN[a,OverBar[a]],-SpinorDotN[a][$lam][$down]}//Flatten);
-SpinorDot6DN[a_][$down][2]:=SpinorDot6DN[a][$down][2]=({SpinorUndotN[a][$lam][$up],-((ExtramassN[a]*SpinorDotN[a][$mu][$down])/SpinorSquareBracketN[a,OverBar[a]])}//Flatten);
-(*And now the invariants*)
-AngSquInvariantN[a_, b_][c_,d_]:=AngSquInvariantN[a, b][c,d]=SpinorUndot6DN[a][$down][c] . SpinorDot6DN[b][$down][d];
-SquAngInvariantN[a_,b_][c_,d_]:=SquAngInvariantN[a,b][c,d]=SpinorDot6DN[a][$down][c] . SpinorUndot6DN[b][$down][d];
-AngAngInvariantN[x1_,x2_,x3_,x4_][a_,b_,c_,d_]:=AngAngInvariantN[x1,x2,x3,x4][a,b,c,d]=-Det[{SpinorUndot6DN[x1][$down][a],SpinorUndot6DN[x2][$down][b],SpinorUndot6DN[x3][$down][c],SpinorUndot6DN[x4][$down][d]}];
-SquSquInvariantN[x1_,x2_,x3_,x4_][a_,b_,c_,d_]:=SquSquInvariantN[x1,x2,x3,x4][a,b,c,d]=-Det[{SpinorDot6DN[x1][$down][a],SpinorDot6DN[x2][$down][b],SpinorDot6DN[x3][$down][c],SpinorDot6DN[x4][$down][d]}];
-);
+mpN[i_]:=mpN[i]=mpN[i,i];
+mpN[i_,j_]:=mpN[i,j]=-(1/2) SpinorDotN[i][$lam][$down] . SpinorDotN[j][$lam][$up] SpinorUndotN[i][$lam][$up] . SpinorUndotN[j][$lam][$down]-1/2 SpinorDotN[i][$lam][$down] . SpinorDotN[j][$mu][$up] SpinorUndotN[i][$lam][$up] . SpinorUndotN[j][$mu][$down]-1/2 SpinorDotN[i][$mu][$down] . SpinorDotN[j][$mu][$up] SpinorUndotN[i][$mu][$up] . SpinorUndotN[j][$mu][$down]-1/2 SpinorDotN[j][$lam][$down] . SpinorDotN[i][$mu][$up] SpinorUndotN[j][$lam][$up] . SpinorUndotN[i][$mu][$down];
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
+(*SNum*)
+
+
+SNum[x__]:=SNum[x]=Total@Join[2*mpN@@@Subsets[{x},{2}],mpN/@{x}];
+
+
+(* ::Subsection:: *)
 (*ToNum*)
 
 
@@ -1454,8 +1491,31 @@ SpinorDot[mom_][$lam][a_][Null]:>SpinorDotN[mom][$lam][$up],SpinorDot[mom_][$lam
 
 
 ToNum[exp_]:=Block[{S,SpinorAngleBracket,SpinorSquareBracket,Extramass,Extramasstilde,AngSquInvariant,SquAngInvariant,AngAngInvariant,SquSquInvariant,Chain,mp,SpinorUndot,SpinorDot,SpinorUndot6D,SpinorDot6D},
-S=SNum;SpinorAngleBracket=SpinorAngleBracketN;SpinorSquareBracket=SpinorSquareBracketN;Extramass=ExtramassN;Extramasstilde=ExtramasstildeN;AngSquInvariant=AngSquInvariantN;SquAngInvariant=SquAngInvariantN;AngAngInvariant=AngAngInvariantN;SquSquInvariant=SquSquInvariantN;Chain=ChainN;mp=mpN6;SpinorUndot[mom_][$lam][a_][Null]:=SpinorUndotN[mom][$lam][$up];SpinorUndot[mom_][$lam][Null][a_]:=SpinorUndotN[mom][$lam][$down];SpinorUndot[mom_][$mu][a_][Null]:=SpinorUndotN[mom][$mu][$up];SpinorUndot[mom_][$mu][Null][a_]:=SpinorUndotN[mom][$mu][$down];
-SpinorDot[mom_][$lam][a_][Null]:=SpinorDotN[mom][$lam][$up];SpinorDot[mom_][$lam][Null][a_]:=SpinorDotN[mom][$lam][$down];SpinorDot[mom_][$mu][a_][Null]:=SpinorDotN[mom][$mu][$up];SpinorDot[mom_][$mu][Null][a_]:=SpinorDotN[mom][$mu][$down];SpinorUndot6D[mom_][A_][Null][a_]:=SpinorUndot6DN[mom][$down][a];SpinorDot6D[mom_][A_][Null][a_]:=SpinorDot6DN[mom][$down][a];
+S=SNum;
+SpinorAngleBracket=SpinorAngleBracketN;
+SpinorSquareBracket=SpinorSquareBracketN;
+(*Extramass=ExtramassN;
+Extramasstilde=ExtramasstildeN;*)
+Chain=ChainN;
+mp=mpN;
+
+SpinorUndot[mom_][$lam][a_Integer][Null]:=SpinorUndotN[mom][$lam][$up][[a]];
+SpinorUndot[mom_][$lam][Null][a_Integer]:=SpinorUndotN[mom][$lam][$down][[a]];
+SpinorUndot[mom_][$mu][a_Integer][Null]:=SpinorUndotN[mom][$mu][$up][[a]];
+SpinorUndot[mom_][$mu][Null][a_Integer]:=SpinorUndotN[mom][$mu][$down][[a]];
+SpinorDot[mom_][$lam][a_Integer][Null]:=SpinorDotN[mom][$lam][$up][[a]];
+SpinorDot[mom_][$lam][Null][a_Integer]:=SpinorDotN[mom][$lam][$down][[a]];
+SpinorDot[mom_][$mu][a_Integer][Null]:=SpinorDotN[mom][$mu][$up][[a]];
+SpinorDot[mom_][$mu][Null][a_Integer]:=SpinorDotN[mom][$mu][$down][[a]];
+
+SpinorUndot[mom_][$lam][a_][Null]:=SpinorUndotN[mom][$lam][$up];
+SpinorUndot[mom_][$lam][Null][a_]:=SpinorUndotN[mom][$lam][$down];
+SpinorUndot[mom_][$mu][a_][Null]:=SpinorUndotN[mom][$mu][$up];
+SpinorUndot[mom_][$mu][Null][a_]:=SpinorUndotN[mom][$mu][$down];
+SpinorDot[mom_][$lam][a_][Null]:=SpinorDotN[mom][$lam][$up];
+SpinorDot[mom_][$lam][Null][a_]:=SpinorDotN[mom][$lam][$down];
+SpinorDot[mom_][$mu][a_][Null]:=SpinorDotN[mom][$mu][$up];
+SpinorDot[mom_][$mu][Null][a_]:=SpinorDotN[mom][$mu][$down];
 exp
 ];
 
