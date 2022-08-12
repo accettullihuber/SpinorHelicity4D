@@ -46,6 +46,7 @@ ToTrace::usage="ToTrace[exp] converts all closed chains of the form \[LeftAngleB
 EpsilonSimplify::usage="EpsilonSimplify is an option for ToTrace whose default value is the string None. If set to the string ReduceEven even powers of the Levi-Civita tensors appearing in the final result of the evaluation are converted into scalar products. If set to KillOdd the even powers are replaced with scalar products and the odd ones are discarded."
 CompleteDenominators::usage="CompleteDenominators[exp] completes all spinor products in the denominator of exp to Mandelstam invariants."
 SpinorDerivative::usage="SpinorDerivative[exp,der] performs the derivative of exp with respect to the spinor expression der. The input der can be either a single spinor in the form \!\(\*TemplateBox[{\"q\", \"a\"},\n\"SpinorLaUp\",\nDisplayFunction->(RowBox[{SuperscriptBox[\"\[Lambda]\", #2], \"[\", #, \"]\"}]& ),\nInterpretationFunction->(RowBox[{\"SpinorUndot\", \"[\", #, \"]\", \"[\", \"$lam\", \"]\", \"[\", #2, \"]\", \"[\", \"Null\", \"]\"}]& )]\), \!\(\*TemplateBox[{\"p\", \"a\"},\n\"SpinorLaDown\",\nDisplayFunction->(RowBox[{SubscriptBox[\"\[Lambda]\", #2], \"[\", #, \"]\"}]& ),\nInterpretationFunction->(RowBox[{\"SpinorUndot\", \"[\", #, \"]\", \"[\", \"$lam\", \"]\", \"[\", \"Null\", \"]\", \"[\", #2, \"]\"}]& )]\) (and equivalent for dotted), a product of such spinors or a list of them."
+SchoutenSimplify::usage="SchoutenSimplify[exp,opts] uses Schouten identities to simplify the expression exp. This function admits options opts, which are the same as those of FullSimplify, since indeed under the hood the function itself is based on Mathematica's FullSimplify."
 
 
 (* ::Section:: *)
@@ -583,7 +584,7 @@ Return[locexp];
 ];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*toChainNew*)
 
 
@@ -692,7 +693,7 @@ local
 ]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*ToChain*)
 
 
@@ -764,7 +765,7 @@ Return[locexp];
 ];
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*ChainSort*)
 
 
@@ -952,6 +953,56 @@ Switch[OptionValue[EpsilonSimplify],
 
 
 CompleteDenominators[exp_]:=exp/.{Power[SpinorAngleBracket[a_,b_],n_?Negative]:>Power[S[a,b]/SpinorSquareBracket[b,a],n],Power[SpinorSquareBracket[a_,b_],n_?Negative]:>Power[S[a,b]/SpinorAngleBracket[b,a],n]};
+
+
+(* ::Subsection:: *)
+(*SchoutenSimplify*)
+
+
+(* ::Subsubsection:: *)
+(*SchoutenRules*)
+
+
+(*Function to extract the pairs for which to build the Schouten-identity rules*)
+
+SchoutenRules[exp_]:=Module[{agl,sqr},
+(*Extract all brackets which are multiplied among each other*)
+agl=Cases[{exp},Times[x__?(Head[#]===SpinorAngleBracket&),y___]:>List[x],\[Infinity]];
+sqr=Cases[{exp},Times[x__?(Head[#]===SpinorSquareBracket&),y___]:>List[x],\[Infinity]];
+
+(*Make pairs taking into account that indices cannot overAutomaticlap*)
+agl=ruleBuilder@@@(Union[Join@@(pairSelector/@agl)]);
+sqr=ruleBuilder@@@(Union[Join@@(pairSelector/@sqr)]);
+
+Return[Join[agl,sqr]]
+
+]
+
+(*Function to convert products of brackets into pairs which allow Schouten identities*)
+
+pairSelector[{x_}]:={};
+pairSelector[pairlist_]:={Splice[Table[If[Intersection[Sequence@@(List@@@#)]==={},#,Nothing]&@{First@pairlist,i},{i,Rest@pairlist}]],Splice[pairSelector[Rest@pairlist]]}
+
+
+(* ::Subsubsection:: *)
+(*SchoutenApply*)
+
+
+(*Function to convert a set of rules to something TransformationRules of Simplify can use*)
+
+toSingleRules[rules_]:=Function[e,e/.#]&/@rules;
+
+(*This functions tryies to apply only Schouten identities to simplify an expression, which means that the expression needs to be already in a factorised form for this to work, so we will feed this into a Simplify*)
+SchoutenApply[exp_]:=Module[{rules=SchoutenRules[exp]},Simplify[exp,TransformationFunctions->toSingleRules[rules]]]
+
+
+(* ::Subsubsection:: *)
+(*SchoutenSimplify*)
+
+
+(*Function which applies Schouten identities to simplify expression. It admits the same options as FullSimplify.*)
+
+SchoutenSimplify[exp_,opts:OptionsPattern[FullSimplify]]:=FullSimplify[exp,opts,TransformationFunctions->{Automatic,SchoutenApply}]
 
 
 (* ::Subsection:: *)
@@ -1249,7 +1300,7 @@ CreatePalette[DynamicModule[{opener1=True,opener2=False},Column[{OpenerView[{"Sp
 ];
 
 
-Print["===============SpinorHelicity4D================"];
+Print["===============SpinorHelicity4D=============="];
 Print["Author: Manuel Accettulli Huber (QMUL)"];
 Print["Please report any bug to:"];
 Print["m.accettullihuber@qmul.ac.uk"];
