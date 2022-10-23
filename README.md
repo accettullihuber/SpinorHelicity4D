@@ -8,4 +8,6 @@ Allows for analytic manipulation as well as numeric applications, including gene
 
 In order to use the package either clone the repository and add the path to repository on your local machine to the Mathematica init.m file in the Kernels folder (add AppendTo[$Path,"local/directory/path/here"] to the init file, for location of init file and further details see documentation here https://reference.wolfram.com/language/ref/file/init.m.html), or paste the content of the cloned folder to your Mathematica Applications folder (for location of this folder see here https://reference.wolfram.com/language/tutorial/WolframSystemFileOrganization.html).
 
+To load package use <<SpinorHelicity4D, functions in the subpackages are then automatically loaded.
+
 Once the package is loaded, information on single functions can be obtained as usual through ?FunctionName, a more complete documentation is on the way...
