@@ -765,7 +765,7 @@ Return[locexp];
 ];
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*ChainSort*)
 
 
@@ -982,6 +982,10 @@ Return[Join[agl,sqr]]
 
 pairSelector[{x_}]:={};
 pairSelector[pairlist_]:={Splice[Table[If[Intersection[Sequence@@(List@@@#)]==={},#,Nothing]&@{First@pairlist,i},{i,Rest@pairlist}]],Splice[pairSelector[Rest@pairlist]]}
+
+(*Function to convert a product of brackets into the associated Schouten identity*)
+
+ruleBuilder[f_[a_,b_],f_[c_,d_]]:=(f[a,b]f[c,d]->-f[a,c]f[d,b]-f[a,d]f[b,c])
 
 
 (* ::Subsubsection:: *)
