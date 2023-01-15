@@ -765,7 +765,7 @@ Return[locexp];
 ];
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*ChainSort*)
 
 
@@ -776,11 +776,15 @@ If[Length[order]>0,
 SHlistordering=Flatten[Transpose@{ToString/@order,order}];
 SHorderedQ=OrderedQ[#,(First@(FirstPosition[SHlistordering,#2])>=First@(FirstPosition[SHlistordering,#1])&)]&;
 
+(*Reorder extrema among each other*)
+Chain[type_,x1_,y_List,x2_,type_]/;!SHorderedQ[{x1,x2}]&&x1=!=x2:=-Chain[type,x2,Reverse@y,x1,type];
+Chain[type_,x1_,y_List,x2_,type2_]/;!SHorderedQ[{x1,x2}]&&x1=!=x2:=Chain[type2,x2,Reverse@y,x1,type];
+
 (*Define properties which reorder the chains with momenta in prescibed order*)
 Chain[type_,x1_,{y1___,z1_?(MemberQ[SHlistordering,#]&),z2_?(MemberQ[SHlistordering,#]&),y2___},x2_,type2_]/;!SHorderedQ[{z1,z2}]:=2*mp[z1,z2]*Chain[type,x1,{y1,y2},x2,type2]-Chain[type,x1,{y1,z2,z1,y2},x2,type2];
 Chain[type_,x1_,{y1___,z1_?(MemberQ[SHlistordering,#]&),y3___,y4_,z2_?(MemberQ[SHlistordering,#]&),y2___},x2_,type2_]/;!SHorderedQ[{z1,z2}]:=2*mp[y4,z2]*Chain[type,x1,{y1,z1,y3,y2},x2,type2]-Chain[type,x1,{y1,z1,y3,z2,y4,y2},x2,type2];
 
-(*Dirac traces can also have the extrema reordered*)
+(*Dirac traces can also have the extrema reordered with internal momenta*)
 
 Chain[$angle,x_?(MemberQ[SHlistordering,#]&),{y1___,y2_?((MemberQ[SHlistordering,#]&&MasslessQ[#])&),y3___},x_,$square]/; !SHorderedQ[{x,y2}]:=Chain[$angle,y2,{y3,x,y1},y2,$square];
 Chain[$square,x_?(MemberQ[SHlistordering,#]&),{y1___,y2_?((MemberQ[SHlistordering,#]&&MasslessQ[#])&),y3___},x_,$angle]/; !SHorderedQ[{x,y2}]:=Chain[$square,y2,{y3,x,y1},y2,$angle];
@@ -789,10 +793,14 @@ Chain[$square,x_?(MemberQ[SHlistordering,#]&),{y1___,y2_?((MemberQ[SHlistorderin
 (*Canonical ordering, easy case, criteria checked on adjacient elements*)
 SHorderedQ=OrderedQ;
 
+(*Reorder extrema among each other*)
+Chain[type_,x1_,y_List,x2_,type_]/;!SHorderedQ[{x1,x2}]&&x1=!=x2:=-Chain[type,x2,Reverse@y,x1,type];
+Chain[type_,x1_,y_List,x2_,type2_]/;!SHorderedQ[{x1,x2}]&&x1=!=x2:=Chain[type2,x2,Reverse@y,x1,type];
+
 (*Define properties which reorder the chains with momenta in prescibed order*)
 Chain[type_,x1_,{y1___,z1_,z2_,y2___},x2_,type2_]/;!OrderedQ[{z1,z2}]:=2*mp[z1,z2]*Chain[type,x1,{y1,y2},x2,type2]-Chain[type,x1,{y1,z2,z1,y2},x2,type2];
 
-(*Dirac traces can also have the extrema reordered*)
+(*Dirac traces can also have the extrema reordered with internal momenta*)
 
 Chain[$angle,x_,{y1___,y2_?(MasslessQ[#]&),y3___},x_,$square]/; !SHorderedQ[{x,y2}]:=Chain[$angle,y2,{y3,x,y1},y2,$square];
 Chain[$square,x_,{y1___,y2_?(MasslessQ[#]&),y3___},x_,$angle]/; !SHorderedQ[{x,y2}]:=Chain[$square,y2,{y3,x,y1},y2,$angle];
@@ -997,7 +1005,7 @@ ruleBuilder[f_[a_,b_],f_[c_,d_]]:=(f[a,b]f[c,d]->-f[a,c]f[d,b]-f[a,d]f[b,c])
 toSingleRules[rules_]:=Function[e,e/.#]&/@rules;
 
 (*This functions tryies to apply only Schouten identities to simplify an expression, which means that the expression needs to be already in a factorised form for this to work, so we will feed this into a Simplify*)
-SchoutenApply[exp_]:=Module[{rules=SchoutenRules[exp]},Simplify[exp,TransformationFunctions->toSingleRules[rules]]]
+SchoutenApply[exp_,opts:OptionsPattern[FullSimplify]]:=Module[{rules=SchoutenRules[exp]},FullSimplify[exp,opts,TransformationFunctions->toSingleRules[rules]]]
 
 
 (* ::Subsubsection:: *)
@@ -1006,7 +1014,7 @@ SchoutenApply[exp_]:=Module[{rules=SchoutenRules[exp]},Simplify[exp,Transformati
 
 (*Function which applies Schouten identities to simplify expression. It admits the same options as FullSimplify.*)
 
-SchoutenSimplify[exp_,opts:OptionsPattern[FullSimplify]]:=FullSimplify[exp,opts,TransformationFunctions->{Automatic,SchoutenApply}]
+SchoutenSimplify[exp_,opts:OptionsPattern[FullSimplify]]:=FullSimplify[exp,opts,TransformationFunctions->{Automatic,SchoutenApply[#,opts]&}]
 
 
 (* ::Subsection:: *)
@@ -1308,7 +1316,7 @@ Print["===============SpinorHelicity4D=============="];
 Print["Author: Manuel Accettulli Huber (QMUL)"];
 Print["Please report any bug to:"];
 Print["m.accettullihuber@qmul.ac.uk"];
-Print["Version 1.0 , last update 06/04/2021"];
+Print["Version 1.0 , last update 15/01/2023"];
 Print[Hyperlink["Click here for full documentation","https://github.com/accettullihuber"]];
 Print["============================================="];
 
