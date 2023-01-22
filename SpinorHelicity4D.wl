@@ -472,7 +472,7 @@ Return[exp];
 ToMandelstam= mpToMandelstam@CompleteMandelstam@#&;
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*ToChain*)
 
 
@@ -765,7 +765,7 @@ Return[locexp];
 ];
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*ChainSort*)
 
 
@@ -956,18 +956,18 @@ Switch[OptionValue[EpsilonSimplify],
 ];
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*CompleteDenominators*)
 
 
-CompleteDenominators[exp_]:=exp/.{Power[SpinorAngleBracket[a_,b_],n_?Negative]:>Power[S[a,b]/SpinorSquareBracket[b,a],n],Power[SpinorSquareBracket[a_,b_],n_?Negative]:>Power[S[a,b]/SpinorAngleBracket[b,a],n]};
+CompleteDenominators[exp_]:=exp/.{Power[SpinorAngleBracket[a_?MasslessQ,b_?MasslessQ],n_?Negative]:>Power[S[a,b]/SpinorSquareBracket[b,a],n],Power[SpinorSquareBracket[a_?MasslessQ,b_?MasslessQ],n_?Negative]:>Power[S[a,b]/SpinorAngleBracket[b,a],n]};
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*SchoutenSimplify*)
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*SchoutenRules*)
 
 
@@ -996,7 +996,7 @@ pairSelector[pairlist_]:={Splice[Table[If[Intersection[Sequence@@(List@@@#)]==={
 ruleBuilder[f_[a_,b_],f_[c_,d_]]:=(f[a,b]f[c,d]->-f[a,c]f[d,b]-f[a,d]f[b,c])
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*SchoutenApply*)
 
 
@@ -1008,7 +1008,7 @@ toSingleRules[rules_]:=Function[e,e/.#]&/@rules;
 SchoutenApply[exp_,opts:OptionsPattern[FullSimplify]]:=Module[{rules=SchoutenRules[exp]},FullSimplify[exp,opts,TransformationFunctions->toSingleRules[rules]]]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*SchoutenSimplify*)
 
 
@@ -1017,7 +1017,7 @@ SchoutenApply[exp_,opts:OptionsPattern[FullSimplify]]:=Module[{rules=SchoutenRul
 SchoutenSimplify[exp_,opts:OptionsPattern[FullSimplify]]:=FullSimplify[exp,opts,TransformationFunctions->{Automatic,SchoutenApply[#,opts]&}]
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*SpinorDerivative*)
 
 

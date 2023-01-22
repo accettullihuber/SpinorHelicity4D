@@ -16,7 +16,6 @@ ClearAll@@Names["SpinorNumerics`*"];
 (*Function description*)
 
 
-
 GenSpinors::usage="GenSpinors[{{\!\(\*SubscriptBox[\(p\), \(1\)]\),...,\!\(\*SubscriptBox[\(p\), \(n\)]\)},{\!\(\*SubscriptBox[\(q\), \(1\)]\),...,\!\(\*SubscriptBox[\(q\), \(m\)]\)}},{Options}] generates numerical values for the spinors corresponding to on-shell, conserved, complex kinematics. The labels \!\(\*SubscriptBox[\(p\), \(i\)]\) correspond to massive particles and the \!\(\*SubscriptBox[\(q\), \(j\)]\) to massless ones. The input GenSpinors[{\!\(\*SubscriptBox[\(k\), \(1\)]\),...,\!\(\*SubscriptBox[\(k\), \(m\)]\)}] is also allowed and will generate spinors for massive particles if AllMassless is set to False, and all massless if it is set to True. The function allows for the following options: {AllMassless,DisplaySpinors,Parametric,ParameterName,ParameterRange,RationalKinematics,Seed,SetMomentum,Type3pt,SameMassess}. For further details type ?OptionName."
 AllMassless::usage="AllMassless is a boolean option for GenSpinors, default is False, If set to True all the entries of GenSpinors are considered as massless. AllMassless->True is equivalent to using the input GenSpinors[{{},{\!\(\*SubscriptBox[\(p\), \(1\)]\),...,\!\(\*SubscriptBox[\(p\), \(n\)]\)}}]."
 (*Dimension::usage="Dimension is an option for GenSpinors. It specifies the dimension of the generated kinematics. Default is 6, allowed are 6 and 4."*)
@@ -41,7 +40,7 @@ ClearKinematics::usage="ClearKinematics clears all the so far generated and stor
 (*ExtramassN::usage="ExtramassN[label] is the numerical equivalent of Extramass[label]."
 ExtramasstildeN::usage="ExtramasstildeN[label] is the numerical equivalent of Extramasstilde[label]."
 *)
-ToNum::usage="ToNum	[exp] return numeric value of exp. It requires some kind of numerical kinematics to be generated first using GenSpinors."
+ToNum::usage="ToNum[exp] return numeric value of exp. It requires some kind of numerical kinematics to be generated first using GenSpinors."
 
 
 
