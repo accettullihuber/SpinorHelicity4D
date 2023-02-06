@@ -110,7 +110,7 @@ KinematicCheck[x_]:=TrueQ[Quiet[Check[x,$Failed,{PowerMod::ninv,Power::infy,Infi
 (*ClearDependentKinematics*)
 
 
-(*This is just the same as ClearKinematics but private, it is a remnant of an old version. When I have time I'll remove this*)
+(*This is just the same as ClearKinematics but private and only clears the dependent kinematics leaving the fundamental building blocks (SpinorUndotN,SpinorDotN,ExtramassN,ExtramasstildeN) intact*)
 
 ClearDependentKinematics[]:=Block[{},
 
@@ -118,12 +118,13 @@ ClearDependentKinematics[]:=Block[{},
 ClearDownValues[#]&/@{SpinorAngleBracketN,SpinorSquareBracketN,Mom4DN,ChainN,SNum,mpN};
 
 (*Clearing functions with SubValues*)
-ClearSubValues[#]&/@{SpinorUndotN,SpinorDotN,ExtramassN,ExtramasstildeN,MomMat4DN};
+(*ClearSubValues[#]&/@{SpinorUndotN,SpinorDotN,ExtramassN,ExtramasstildeN,MomMat4DN};*)
+ClearSubValues[#]&/@{MomMat4DN};
 
 ];
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*ClearKinematics*)
 
 
@@ -1223,7 +1224,8 @@ type===2,
 (*Pure 6D*)
 n=Length[lab6];
 kinem={Table[{la[i],rs[i],la[i+n],rs[i+n]},{i,n}],{}};
-kinem2=GenerateKinematics[n,0,{0},{RationalKinematics->OptionValue[RationalKinematics],ParameterRange->OptionValue[ParameterRange],Parametric->OptionValue[Parametric],ParameterName->OptionValue[ParameterName]}];
+(*kinem2=GenerateKinematics[n,0,{0},{RationalKinematics->OptionValue[RationalKinematics],ParameterRange->OptionValue[ParameterRange],Parametric->OptionValue[Parametric],ParameterName->OptionValue[ParameterName]}];*)
+kinem2=GenerateKinematics[n,0,Length/@samemasses,{RationalKinematics->OptionValue[RationalKinematics],ParameterRange->OptionValue[ParameterRange],Parametric->OptionValue[Parametric],ParameterName->OptionValue[ParameterName]}];
 If[kinem2===$Failed,Throw[kinem2]];
 Evaluate[kinem]=kinem2;
 ];
