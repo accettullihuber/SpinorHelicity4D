@@ -60,6 +60,13 @@ S::usage="S[p,...,q] is the Mandelstam invariant (p+...+q\!\(\*SuperscriptBox[\(
 DeltaSH::usage="DeltaSH[a,b], represented as \!\(\*TemplateBox[{\"a\", \"b\"},\n\"DeltaSH\",\nDisplayFunction->(SubsuperscriptBox[\"\[Delta]\", #2, #]& )]\) is the delta function for undotted indices."
 DeltaTildeSH::usage="DeltaTildeSH[a,b], represnted as \!\(\*TemplateBox[{\"a\", \"b\"},\n\"DeltaTildeSH\",\nDisplayFunction->(SubsuperscriptBox[OverscriptBox[\"\[Delta]\", \"~\"], #2, #]& )]\), is the delta function on the dotted spinors."
 NewProcess::usage="NewProcess[] clears all the invariants, the list of defined massless momenta as well as the declared momenta."
+DeltaVec::usage="DeltaVec[\[Mu],\[Nu]] is the Kronecker delta for vector objects. It allows for the option $DeltaVecDim."
+$DeltaVecDim::usage="Option for DeltaVec, allows to set the dimension of spacetime, default is 4."
+Eta::usage="Eta[\[Mu],\[Nu]][type] is the flat space metric tensor, type is either $up or $down and specifies the index type."
+Polar::usage="Polar[mom,refmom][upper][lower] is the polarization vector with momentum mom and reference momentum refmom, upper and lower specify the vector indices, where the unused index needs to be set to Null."
+PolarBare::usage="PolarBare[mom,refmom] represents a polarization vector with momentum mom and reference momentum refmom, when contracted in a scalar product (and thus it is stripped of any index)."
+Mom::usage="Mom[mom][upper][lower] is the momentum vector of momentum mom, upper and lower specify the vector indices, where the unused index needs to be set to Null."
+PauliSH::usage="PauliSH[\[Mu]][type] is a place holder inside Chain objects for the uncontracted Pauli matrix with index \[Mu], type can be either $up or $down and specifies the index position. This placeholder automatically contract with vector quantities."
 
 
 (* ::Subsection:: *)
@@ -264,7 +271,16 @@ $Shortcuts={RawBoxes[RowBox[{SuperscriptBox["\[Lambda]","\[Alpha]"],"[p]"}]] -> 
 			RawBoxes[RowBox[{"[",RowBox[{"p  q"}],"]"}]]-> "esc + sb + esc",
 RawBoxes[RowBox[{"\[LeftAngleBracket]",RowBox[{"p q k"}],"]"}]]-> "esc + cas + esc",
 RawBoxes[RowBox[{"[",RowBox[{"p q k"}],"\[RightAngleBracket]"}]]-> "esc + csa + esc",RawBoxes[RowBox[{"\[LeftAngleBracket]",RowBox[{"p q k l"}],"\[RightAngleBracket]"}]]-> "esc + caa + esc",
-RawBoxes[RowBox[{"[",RowBox[{"p q k l"}],"]"}]]-> "esc + css + esc"}//MatrixForm;
+RawBoxes[RowBox[{"[",RowBox[{"p q k l"}],"]"}]]-> "esc + css + esc",
+RawBoxes[RowBox[{SubsuperscriptBox["\[Delta]","\[Mu]","\[Nu]"]}]] -> "esc + dlv + esc",
+RawBoxes[RowBox[{SuperscriptBox["\[Eta]",RowBox[{"\[Mu]","\[Nu]"}]]}]] -> "esc + etu + esc",
+RawBoxes[RowBox[{SubscriptBox["\[Eta]",RowBox[{"\[Mu]","\[Nu]"}]]}]] -> "esc + etd + esc",
+RawBoxes[RowBox[{SuperscriptBox["p",RowBox[{"\[Mu]"}]]}]] -> "esc + mmu + esc",
+RawBoxes[RowBox[{SubscriptBox["p",RowBox[{"\[Mu]"}]]}]] -> "esc + mmd + esc",
+RawBoxes[RowBox[{SuperscriptBox["\[CurlyEpsilon]",RowBox[{"\[Mu]","\[Nu]"}]],"[p,q]"}]] -> "esc + plu + esc",
+RawBoxes[RowBox[{SubscriptBox["\[CurlyEpsilon]",RowBox[{"\[Mu]","\[Nu]"}]],"[p,q]"}]] -> "esc + pld + esc",
+RawBoxes[RowBox[{SuperscriptBox["\[Sigma]",RowBox[{"\[Mu]"}]]}]] -> "esc + psu + esc",
+RawBoxes[RowBox[{SubscriptBox["\[Sigma]",RowBox[{"\[Mu]"}]]}]] -> "esc + psd + esc"}//MatrixForm;
 			];
 
 
@@ -680,6 +696,178 @@ DisplayFunction->(SubsuperscriptBox[OverscriptBox["\[Delta]","~"],#2,#1]&)
 ];
 DeltaSH /: MakeBoxes[DeltaSH[x_,y_],TraditionalForm|StandardForm]:=DeltaSHBox[ToBoxes[x],ToBoxes[y]];
 DeltaTildeSH /: MakeBoxes[DeltaTildeSH[x_,y_],TraditionalForm|StandardForm]:=DeltaTildeSHBox[ToBoxes[x],ToBoxes[y]];
+
+
+(* ::Subsection::Closed:: *)
+(*Vector Delta*)
+
+
+(*Displaying it nicely:*)
+DeltaVecBox[x_,y_]:=TemplateBox[{x,y},"DeltaVec",
+DisplayFunction->(RowBox[{SubsuperscriptBox["\[Delta]",#2,#1]}]&),
+InterpretationFunction->(RowBox[{"DeltaVec","[",#1,",",#2,"]"}]&)
+];
+
+DeltaVec /: MakeBoxes[DeltaVec[x_,y_],StandardForm|TraditionalForm]:=DeltaVecBox[ToBoxes[x],ToBoxes[y]];
+
+(*Set default dimension:*)
+Options[DeltaVec]={$DeltaVecDim->4};
+
+(*Some properties.*)
+(*Contracted with itself:*)
+DeltaVec[up_,down_,OptionsPattern[]]/;TrueQ[up==down]:=OptionValue[$DeltaVecDim];
+DeltaVec /: Times[DeltaVec[up1_,down1_],DeltaVec[down1_,down2_]]:=DeltaVec[up1,down2];
+DeltaVec /: Times[DeltaVec[up1_,down1_,opt1_],DeltaVec[down1_,down2_,opt1_]]:=DeltaVec[up1,down2,opt1];
+
+(*Contracted with Eta, Mom and Polar:*)
+DeltaVec /: Times[DeltaVec[a_,b_],Eta[b_,c_][$up]]:=Eta[a,c][$up];
+DeltaVec /: Times[DeltaVec[a_,b_],Eta[c_,b_][$up]]:=Eta[a,c][$up];
+DeltaVec /: Times[DeltaVec[a_,b_],Eta[a_,c_][$down]]:=Eta[b,c][$down];
+DeltaVec /: Times[DeltaVec[a_,b_],Eta[c_,a_][$down]]:=Eta[b,c][$down];
+DeltaVec /: Times[DeltaVec[up_,do_],Mom[lab_][do_][Null]]:=Mom[lab][up][Null];
+DeltaVec /: Times[DeltaVec[up_,do_],Mom[lab_][Null][up_]]:=Mom[lab][Null][do];
+DeltaVec /: Times[DeltaVec[up_,do_],Polar[lab_,ref_][do_][Null]]:=Polar[lab,ref][up][Null];
+DeltaVec /: Times[DeltaVec[up_,do_],Polar[lab_,ref_][Null][up_]]:=Polar[lab,ref][Null][do];
+
+(*Define shortcut*)
+If[frontend==1,
+SetOptions[EvaluationNotebook[],InputAliases -> DeleteDuplicates@Append[InputAliases /. Options[EvaluationNotebook[], InputAliases], "dlv" -> DeltaVecBox["\[SelectionPlaceholder]","\[SelectionPlaceholder]"]]];
+];
+
+
+
+(* ::Subsection::Closed:: *)
+(*Metric tensor*)
+
+
+(*Display properties*)
+
+EtaBoxup[mu_,nu_]:=TemplateBox[{mu,nu},"etaup",
+DisplayFunction->(SuperscriptBox["\[Eta]",RowBox[{#1,#2}]]&),
+InterpretationFunction->(RowBox[{"Eta","[",#1,",",#2,"]","[","$up","]"}]&)
+];
+EtaBoxdown[mu_,nu_]:=TemplateBox[{mu,nu},"etadown",
+DisplayFunction->(SubscriptBox["\[Eta]",RowBox[{#1,#2}]]&),
+InterpretationFunction->(RowBox[{"Eta","[",#1,",",#2,"]","[","$down","]"}]&)
+];
+Eta /: MakeBoxes[Eta[mu_,nu_][$up],StandardForm|TraditionalForm]:=EtaBoxup[ToBoxes[mu],ToBoxes[nu]];
+Eta /: MakeBoxes[Eta[mu_,nu_][$down],StandardForm|TraditionalForm]:=EtaBoxdown[ToBoxes[mu],ToBoxes[nu]];
+SetAttributes[Eta,Orderless];
+
+(*Define shortcut*)
+If[frontend==1,
+SetOptions[EvaluationNotebook[],InputAliases -> DeleteDuplicates@Append[InputAliases /. Options[EvaluationNotebook[], InputAliases], "etu" -> EtaBoxup["\[SelectionPlaceholder]","\[SelectionPlaceholder]"]]];
+SetOptions[EvaluationNotebook[],InputAliases -> DeleteDuplicates@Append[InputAliases /. Options[EvaluationNotebook[], InputAliases], "etd" -> EtaBoxdown["\[SelectionPlaceholder]","\[SelectionPlaceholder]"]]];
+];
+
+
+(* ::Subsection::Closed:: *)
+(*Polarization vectors*)
+
+
+(*Visualization properties*)
+
+PolarBoxup[mom_,refmom_,mu_]:=TemplateBox[{mom,refmom,mu},"Polarup",
+DisplayFunction->(RowBox[{SuperscriptBox["\[CurlyEpsilon]",#3],"[",#1,",",#2,"]"}]&),
+InterpretationFunction->(RowBox[{"Polar","[",#1,",",#2,"]","[",#3,"]","[","Null","]"}]&)
+];
+PolarBoxdown[mom_,refmom_,mu_]:=TemplateBox[{mom,refmom,mu},"Polardown",
+DisplayFunction->(RowBox[{SubscriptBox["\[CurlyEpsilon]",#3],"[",#1,",",#2,"]"}]&),
+InterpretationFunction->(RowBox[{"Polar","[",#1,",",#2,"]","[","Null","]","[",#3,"]"}]&)
+];
+PolarBareBox[mom_,refmom_]:=TemplateBox[{mom,refmom},"PolarBare",
+DisplayFunction->(RowBox[{"\[CurlyEpsilon]","[",#1,",",#2,"]"}]&),
+InterpretationFunction->(RowBox[{"PolarBare","[",#1,",",#2,"]"}]&)
+];
+Polar /: MakeBoxes[Polar[mom_,refmom_][mu_][Null],TraditionalForm|StandardForm]:=PolarBoxup[ToBoxes[mom],ToBoxes[refmom],ToBoxes[mu]];
+Polar /: MakeBoxes[Polar[mom_,refmom_][Null][mu_],TraditionalForm|StandardForm]:=PolarBoxdown[ToBoxes[mom],ToBoxes[refmom],ToBoxes[mu]];
+PolarBare /: MakeBoxes[PolarBare[mom_,refmom_],StandardForm|TraditionalForm]:=PolarBareBox[ToBoxes[mom],ToBoxes[refmom]];
+
+(*Define shortcut*)
+If[frontend==1,
+SetOptions[EvaluationNotebook[],InputAliases -> DeleteDuplicates@Append[InputAliases /. Options[EvaluationNotebook[], InputAliases], "plu" -> PolarBoxup["\[SelectionPlaceholder]","\[SelectionPlaceholder]","\[SelectionPlaceholder]"]]];
+SetOptions[EvaluationNotebook[],InputAliases -> DeleteDuplicates@Append[InputAliases /. Options[EvaluationNotebook[], InputAliases], "pld" -> PolarBoxdown["\[SelectionPlaceholder]","\[SelectionPlaceholder]","\[SelectionPlaceholder]"]]];
+SetOptions[EvaluationNotebook[],InputAliases -> DeleteDuplicates@Append[InputAliases /. Options[EvaluationNotebook[], InputAliases], "plb" -> PolarBareBox["\[SelectionPlaceholder]","\[SelectionPlaceholder]"]]];
+];
+
+(*Define properties with respect to declared momenta*)
+
+Polar[mom_,refmom_][a_][b_]/;AnyTrue[MomList,!FreeQ[mom,#]&]:=Polar[mom/.MomReps,refmom][a][b];
+Polar[mom_,refmom_][a_][b_]/;AnyTrue[MomList,!FreeQ[refmom,#]&]:=Polar[mom,refmom/.MomReps][a][b];
+PolarBare[mom_,refmom_]/;AnyTrue[MomList,!FreeQ[mom,#]&]:=PolarBare[mom/.MomReps,refmom];
+PolarBare[mom_,refmom_]/;AnyTrue[MomList,!FreeQ[refmom,#]&]:=PolarBare[mom,refmom/.MomReps];
+
+
+(* ::Subsection::Closed:: *)
+(*Momentum vector*)
+
+
+(*Display properties of the momentum*)
+MomBoxup[mom_,mu_]:=TemplateBox[{mom,mu},"Momup",
+DisplayFunction->(RowBox[{SuperscriptBox[#1,#2]}]&),
+InterpretationFunction->(RowBox[{"Mom","[",#1,"]","[",#2,"]","[","Null","]"}]&)
+];
+MomBoxdown[mom_,mu_]:=TemplateBox[{mom,mu},"Momdown",
+DisplayFunction->(RowBox[{SubscriptBox[#1,#2]}]&),
+InterpretationFunction->(RowBox[{"Mom","[",#1,"]","[","Null","]","[",#2,"]"}]&)
+];
+
+Mom /: MakeBoxes[Mom[mom_][mu_][Null],StandardForm|TraditionalForm]:=MomBoxup[ToBoxes[mom],ToBoxes[mu]];
+Mom /: MakeBoxes[Mom[mom_][Null][mu_],StandardForm|TraditionalForm]:=MomBoxdown[ToBoxes[mom],ToBoxes[mu]];
+
+(*Define shortcut*)
+If[frontend==1,
+SetOptions[EvaluationNotebook[],InputAliases -> DeleteDuplicates@Append[InputAliases /. Options[EvaluationNotebook[], InputAliases], "mmu" -> MomBoxup["\[SelectionPlaceholder]","\[SelectionPlaceholder]"]]];
+SetOptions[EvaluationNotebook[],InputAliases -> DeleteDuplicates@Append[InputAliases /. Options[EvaluationNotebook[], InputAliases], "mmd" -> MomBoxdown["\[SelectionPlaceholder]","\[SelectionPlaceholder]"]]];
+];
+
+(*Define properties with respect to declared momenta*)
+Mom[mom_][a_][b_]/;AnyTrue[MomList,!FreeQ[mom,#]&]:=Mom[mom/.MomReps][a][b];
+Mom[x_+a_.*momlabel_String][upper_][lower_]:=Mom[x][upper][lower]+Mom[a*momlabel][upper][lower];
+Mom[Times[int_?Negative,a1___,momlabel_String,a2___]][upper_][lower_]:=I*(-int)Mom[a1*momlabel*a2][upper][lower];
+Mom[a_*momlabel_String][upper_][lower_]:=a*Mom[momlabel][upper][lower];
+
+(*Contraction properties of all the vector quantities*)
+Eta /: Times[Eta[mu_,nu_][$down],f_[lab__][nu_][Null]]:=f[lab][Null][mu];
+Eta /: Times[Eta[mu_,nu_][$up],f_[lab__][Null][nu_]]:=f[lab][mu][Null];
+Eta /: Times[Eta[mu_,nu_][$up],Eta[nu_,ro_][$down]]:=DeltaVec[mu,ro];
+Mom /: Times[Mom[lab1_][mu_][Null],Mom[lab2__][Null][mu_]]:=mp[lab1,lab2];
+Mom /: Times[Mom[lab1_][mu_][Null],Polar[lab2__][Null][mu_]]:=mp[lab1,PolarBare[lab2]];
+Mom /: Times[Mom[lab1_][Null][mu_],Polar[lab2__][mu_][Null]]:=mp[lab1,PolarBare[lab2]];
+Polar /: Times[Polar[lab1_,lab2_][mu_][Null],Polar[lab3__][Null][mu_]]:=mp[PolarBare[lab1,lab2],PolarBare[lab3]];
+PolarBare /: mp[PolarBare[x_,ref_],x_]:=0;
+PolarBare /: mp[PolarBare[x_,ref_],ref_]:=0;
+PolarBare /: mp[PolarBare[x_,ref_],PolarBare[x_,ref_]]:=0;
+
+
+(* ::Subsection:: *)
+(*PauliSH*)
+
+
+(*Pauli matrices needed for representation inside chains*)
+PauliSHupBox[mu_]:=TemplateBox[{mu},"PauliSH",
+DisplayFunction->(RowBox[{SuperscriptBox["\[Sigma]",#1]}]&),
+InterpretationFunction->(RowBox[{"PauliSH","[",#1,"]","[","$up","]"}]&)
+];
+PauliSHdownBox[mu_]:=TemplateBox[{mu},"PauliSH",
+DisplayFunction->(RowBox[{SubscriptBox["\[Sigma]",#1]}]&),
+InterpretationFunction->(RowBox[{"PauliSH","[",#1,"]","[","$down","]"}]&)
+];
+
+PauliSH /:  MakeBoxes[PauliSH[mu_][$up],StandardForm|TraditionalForm]:=PauliSHupBox[ToBoxes[mu]];
+PauliSH /:  MakeBoxes[PauliSH[mu_][$down],StandardForm|TraditionalForm]:=PauliSHdownBox[ToBoxes[mu]];
+
+(*Define shortcut*)
+If[frontend==1,
+SetOptions[EvaluationNotebook[],InputAliases -> DeleteDuplicates@Append[InputAliases /. Options[EvaluationNotebook[], InputAliases], "psu" -> PauliSHupBox["\[SelectionPlaceholder]"]]];
+SetOptions[EvaluationNotebook[],InputAliases -> DeleteDuplicates@Append[InputAliases /. Options[EvaluationNotebook[], InputAliases], "psd" -> PauliSHdownBox["\[SelectionPlaceholder]"]]];
+];
+
+(*Contraction properties with momenta and among each other*)
+Chain /: Times[Chain[type1_,mom1_,{x___,PauliSH[mu_][$up],y___},mom2_,type2_],Mom[k_][Null][mu_]]:=Chain[type1,mom1,{x,k,y},mom2,type2];
+Chain /: Times[Chain[type1_,mom1_,{x___,PauliSH[mu_][$down],y___},mom2_,type2_],Mom[k_][mu_][Null]]:=Chain[type1,mom1,{x,k,y},mom2,type2];
+(*Fierz identity*)
+Chain /: Times[Chain[type1_,mom1_,{PauliSH[mu_][$up]},mom2_,type2_], Chain[type1_,mom3_,{PauliSH[mu_][$down]},mom4_,type2_]]/;type1=!=type2:=If[type1===$angle, 2SpinorAngleBracket[mom1,mom3]SpinorSquareBracket[mom4,mom2],2SpinorSquareBracket[mom1,mom3]SpinorAngleBracket[mom4,mom2]];
 
 
 (* ::Section:: *)

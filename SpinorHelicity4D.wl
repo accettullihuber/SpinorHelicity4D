@@ -47,6 +47,8 @@ EpsilonSimplify::usage="EpsilonSimplify is an option for ToTrace whose default v
 CompleteDenominators::usage="CompleteDenominators[exp] completes all spinor products in the denominator of exp to Mandelstam invariants."
 SpinorDerivative::usage="SpinorDerivative[exp,der] performs the derivative of exp with respect to the spinor expression der. The input der can be either a single spinor in the form \!\(\*TemplateBox[{\"q\", \"a\"},\n\"SpinorLaUp\",\nDisplayFunction->(RowBox[{SuperscriptBox[\"\[Lambda]\", #2], \"[\", #, \"]\"}]& ),\nInterpretationFunction->(RowBox[{\"SpinorUndot\", \"[\", #, \"]\", \"[\", \"$lam\", \"]\", \"[\", #2, \"]\", \"[\", \"Null\", \"]\"}]& )]\), \!\(\*TemplateBox[{\"p\", \"a\"},\n\"SpinorLaDown\",\nDisplayFunction->(RowBox[{SubscriptBox[\"\[Lambda]\", #2], \"[\", #, \"]\"}]& ),\nInterpretationFunction->(RowBox[{\"SpinorUndot\", \"[\", #, \"]\", \"[\", \"$lam\", \"]\", \"[\", \"Null\", \"]\", \"[\", #2, \"]\"}]& )]\) (and equivalent for dotted), a product of such spinors or a list of them."
 SchoutenSimplify::usage="SchoutenSimplify[exp,opts] uses Schouten identities to simplify the expression exp. This function admits options opts, which are the same as those of FullSimplify, since indeed under the hood the function itself is based on Mathematica's FullSimplify."
+VecToSpinors::usage="VecToSpinors[exp,plus_List,minus_List] converts vector input to spinor form in exp, plus and minus are list specifying the momentum labels with positive/negative helicity respectively. These arguments are optional and only required if polarization vectors are present in input expression."
+MpToSpinors::usage="MpToSpinors[exp,plus_List,minus_List] converts scalar products present in exp into spinor products, notice that this conversion requires the appropriate momentum labels to be declared as massless. Furthermore, plus and minus are list specifying the momentum labels with positive/negative helicity respectively. These arguments are optional and only required if polarization vectors are present in input expression."
 
 
 (* ::Section:: *)
@@ -261,11 +263,14 @@ ReleaseHold[defs];
 ];*)
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Palette*)
 
 
-SpinorPalette[]:=CreatePalette[DynamicModule[{opener1=True,opener2=False},Column[{OpenerView[{"Spinors",Grid[Join[Partition[PasteButton[RawBoxes[#]]&/@{SpinorBuildingBlocks`Private`SpinorLaUpBox["\[SelectionPlaceholder]","\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`SpinorLaDownBox["\[SelectionPlaceholder]","\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`SpinorLatUpBox["\[SelectionPlaceholder]","\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`SpinorLatDownBox["\[SelectionPlaceholder]","\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`SpinorUndotBareLBox["\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`SpinorDotBareLBox["\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`LevicivitaSHBoxUp["\[SelectionPlaceholder]","\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`LevicivitaSHBoxDown["\[SelectionPlaceholder]","\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`AngleSquareChainBox["\[SelectionPlaceholder]","{\[SelectionPlaceholder]}","\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`SquareAngleChainBox["\[SelectionPlaceholder]","{\[SelectionPlaceholder]}","\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`AngleAngleChainBox["\[SelectionPlaceholder]","{\[SelectionPlaceholder]}","\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`SquareSquareChainBox["\[SelectionPlaceholder]","{\[SelectionPlaceholder]}","\[SelectionPlaceholder]"]},4],{{PasteButton[RawBoxes[SpinorBuildingBlocks`Private`SpinorAngleBracketBox["\[SelectionPlaceholder]", "\[Placeholder]"]]],SpanFromLeft,PasteButton[RawBoxes[SpinorBuildingBlocks`Private`SpinorSquareBracketBox["\[SelectionPlaceholder]", "\[Placeholder]"]]],SpanFromLeft}}],Spacings->{2,0.6}]},Dynamic[opener1,(opener1=#;opener2=opener2)&]],OpenerView[{"Vectors",Grid[{1,2,3,4},Spacings->Automatic]},Dynamic[opener2,(opener2=#;opener1=opener1)&]]}]],WindowTitle->"SpinorHelicity4DInput",Saveable->False];
+SpinorPalette[]:=CreatePalette[DynamicModule[{opener1=True,opener2=False},Column[{OpenerView[{"Spinors",Grid[Join[Partition[PasteButton[RawBoxes[#]]&/@{SpinorBuildingBlocks`Private`SpinorLaUpBox["\[SelectionPlaceholder]","\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`SpinorLaDownBox["\[SelectionPlaceholder]","\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`SpinorLatUpBox["\[SelectionPlaceholder]","\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`SpinorLatDownBox["\[SelectionPlaceholder]","\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`SpinorUndotBareLBox["\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`SpinorDotBareLBox["\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`LevicivitaSHBoxUp["\[SelectionPlaceholder]","\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`LevicivitaSHBoxDown["\[SelectionPlaceholder]","\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`AngleSquareChainBox["\[SelectionPlaceholder]","{\[SelectionPlaceholder]}","\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`SquareAngleChainBox["\[SelectionPlaceholder]","{\[SelectionPlaceholder]}","\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`AngleAngleChainBox["\[SelectionPlaceholder]","{\[SelectionPlaceholder]}","\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`SquareSquareChainBox["\[SelectionPlaceholder]","{\[SelectionPlaceholder]}","\[SelectionPlaceholder]"]},4],{{PasteButton[RawBoxes[SpinorBuildingBlocks`Private`SpinorAngleBracketBox["\[SelectionPlaceholder]", "\[Placeholder]"]]],SpanFromLeft,PasteButton[RawBoxes[SpinorBuildingBlocks`Private`SpinorSquareBracketBox["\[SelectionPlaceholder]", "\[Placeholder]"]]],SpanFromLeft}}],Spacings->{2,0.6}]},Dynamic[opener1,(opener1=#;opener2=opener2)&]],OpenerView[{"Vector quantities",Grid[Join[Partition[PasteButton[RawBoxes[#]]&/@{SpinorBuildingBlocks`Private`MomBoxup["\[SelectionPlaceholder]","\[SelectionPlaceholder]"],
+SpinorBuildingBlocks`Private`MomBoxdown["\[SelectionPlaceholder]","\[SelectionPlaceholder]"],
+SpinorBuildingBlocks`Private`PauliSHupBox["\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`PauliSHdownBox["\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`PolarBoxup["\[SelectionPlaceholder]","\[SelectionPlaceholder]","\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`PolarBoxdown["\[SelectionPlaceholder]","\[SelectionPlaceholder]","\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`PolarBareBox["\[SelectionPlaceholder]","\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`DeltaVecBox["\[SelectionPlaceholder]","\[SelectionPlaceholder]"]
+},4],{{PasteButton[RawBoxes[SpinorBuildingBlocks`Private`EtaBoxup["\[SelectionPlaceholder]","\[SelectionPlaceholder]"]]],SpanFromLeft,PasteButton[RawBoxes[SpinorBuildingBlocks`Private`EtaBoxdown["\[SelectionPlaceholder]","\[SelectionPlaceholder]"]]],SpanFromLeft}}],Spacings->{2,0.6}]},Dynamic[opener2,(opener2=#;opener1=opener1)&]]}]],WindowTitle->"SpinorHelicity4DInput",Saveable->False];
 
 
 (* ::Section:: *)
@@ -956,7 +961,7 @@ Switch[OptionValue[EpsilonSimplify],
 ];
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*CompleteDenominators*)
 
 
@@ -1302,13 +1307,47 @@ Fold[SpinorDerivativeDot,loclabs,squ]
 ];
 
 
+(* ::Subsection:: *)
+(*VecToSpinors*)
+
+
+VecToSpinors[exp_,plus0_List:{},minus0_List:{}]:=
+Module[{plus,minus},
+plus=Join[plus0,ToString/@plus0];
+minus=Join[minus0,ToString/@minus0];
+exp/.{Mom[p_?MasslessQ][a_][Null]:>1/2*Chain[$angle,p,{PauliSH[a][$up]},p,$square],Mom[p_?MasslessQ][Null][a_]:>1/2*Chain[$angle,p,{PauliSH[a][$down]},p,$square],Polar[k_?MasslessQ,r_][a_][Null]/;MemberQ[plus,k]:>1/Sqrt[2]*Chain[$angle,r,{PauliSH[a][$up]},k,$square]/SpinorAngleBracket[r,k],Polar[k_?MasslessQ,r_][a_][Null]/;MemberQ[minus,k]:>1/Sqrt[2]*Chain[$angle,k,{PauliSH[a][$up]},r,$square]/SpinorSquareBracket[k,r],Polar[k_?MasslessQ,r_][Null][a_]/;MemberQ[plus,k]:>1/Sqrt[2]*Chain[$angle,r,{PauliSH[a][$down]},k,$square]/SpinorAngleBracket[r,k],Polar[k_?MasslessQ,r_][Null][a_]/;MemberQ[minus,k]:>1/Sqrt[2]*Chain[$angle,k,{PauliSH[a][$down]},r,$square]/SpinorSquareBracket[k,r]}
+];
+
+
+(* ::Subsection:: *)
+(*MpToSpinors*)
+
+
+MpToSpinors[exp_,plus0_List:{},minus0_List:{}]:=Module[{locexp,rep1,rep2,rep3,plus,minus},
+locexp=exp;
+plus=Join[plus0,ToString/@plus0];
+minus=Join[minus0,ToString/@minus0];
+(*Momenta*)
+rep1={mp[x_?MasslessQ,y_?MasslessQ]:>1/2*SpinorAngleBracket[x,y]SpinorSquareBracket[y,x]};
+(*Momentum with polarization*)
+rep2={mp[p_?MasslessQ,PolarBare[k_?MasslessQ,r_]]/;MemberQ[plus,k]:>1/Sqrt[2]*(SpinorAngleBracket[p,r]SpinorSquareBracket[p,k])/SpinorAngleBracket[k,r],mp[p_?MasslessQ,PolarBare[k_?MasslessQ,r_]]/;MemberQ[minus,k]:>-1/Sqrt[2]*(SpinorAngleBracket[p,k]SpinorSquareBracket[p,r])/SpinorSquareBracket[k,r]};
+(*Polarizations*)
+rep3={mp[PolarBare[k1_?MasslessQ,r1_],PolarBare[k2_?MasslessQ,r2_]]/;MemberQ[plus,k1]&&MemberQ[plus,k2]:>(SpinorAngleBracket[r1,r2]SpinorSquareBracket[k2,k1])/(SpinorAngleBracket[k1,r1]SpinorAngleBracket[k2,r2]),mp[PolarBare[k1_?MasslessQ,r1_],PolarBare[k2_?MasslessQ,r2_]]/;MemberQ[plus,k1]&&MemberQ[minus,k2]:>-(SpinorAngleBracket[r1,k2]SpinorSquareBracket[r2,k1])/(SpinorAngleBracket[k1,r1]SpinorSquareBracket[k2,r2]),mp[PolarBare[k1_?MasslessQ,r1_],PolarBare[k2_?MasslessQ,r2_]]/;MemberQ[minus,k1]&&MemberQ[minus,k2]:>(SpinorAngleBracket[k1,k2]SpinorSquareBracket[r2,r1])/(SpinorSquareBracket[k1,r1]SpinorSquareBracket[k2,r2])};
+locexp=locexp/.Flatten[{rep1,rep2,rep3}];
+Return[locexp];
+];
+
+
 (* ::Section:: *)
 (*End of context*)
 
 
 (*Open palette*)
 If[frontend==1,
-CreatePalette[DynamicModule[{opener1=True,opener2=False},Column[{OpenerView[{"Spinors",Grid[Join[Partition[PasteButton[RawBoxes[#]]&/@{SpinorBuildingBlocks`Private`SpinorLaUpBox["\[SelectionPlaceholder]","\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`SpinorLaDownBox["\[SelectionPlaceholder]","\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`SpinorLatUpBox["\[SelectionPlaceholder]","\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`SpinorLatDownBox["\[SelectionPlaceholder]","\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`SpinorUndotBareLBox["\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`SpinorDotBareLBox["\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`LevicivitaSHBoxUp["\[SelectionPlaceholder]","\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`LevicivitaSHBoxDown["\[SelectionPlaceholder]","\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`AngleSquareChainBox["\[SelectionPlaceholder]",ToBoxes[{\[SelectionPlaceholder]}],"\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`SquareAngleChainBox["\[SelectionPlaceholder]",ToBoxes[{\[SelectionPlaceholder]}],"\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`AngleAngleChainBox["\[SelectionPlaceholder]",ToBoxes[{\[SelectionPlaceholder]}],"\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`SquareSquareChainBox["\[SelectionPlaceholder]",ToBoxes[{\[SelectionPlaceholder]}],"\[SelectionPlaceholder]"]},4],{{PasteButton[RawBoxes[SpinorBuildingBlocks`Private`SpinorAngleBracketBox["\[SelectionPlaceholder]", "\[Placeholder]"]]],SpanFromLeft,PasteButton[RawBoxes[SpinorBuildingBlocks`Private`SpinorSquareBracketBox["\[SelectionPlaceholder]", "\[Placeholder]"]]],SpanFromLeft}}],Spacings->{2,0.6}]},Dynamic[opener1,(opener1=#;opener2=opener2)&]],OpenerView[{"Vectors",Grid[{1,2,3,4},Spacings->Automatic]},Dynamic[opener2,(opener2=#;opener1=opener1)&]]}]],WindowTitle->"SpinorHelicity4DInput",Saveable->False];
+CreatePalette[DynamicModule[{opener1=True,opener2=False},Column[{OpenerView[{"Spinors",Grid[Join[Partition[PasteButton[RawBoxes[#]]&/@{SpinorBuildingBlocks`Private`SpinorLaUpBox["\[SelectionPlaceholder]","\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`SpinorLaDownBox["\[SelectionPlaceholder]","\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`SpinorLatUpBox["\[SelectionPlaceholder]","\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`SpinorLatDownBox["\[SelectionPlaceholder]","\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`SpinorUndotBareLBox["\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`SpinorDotBareLBox["\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`LevicivitaSHBoxUp["\[SelectionPlaceholder]","\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`LevicivitaSHBoxDown["\[SelectionPlaceholder]","\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`AngleSquareChainBox["\[SelectionPlaceholder]",ToBoxes[{\[SelectionPlaceholder]}],"\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`SquareAngleChainBox["\[SelectionPlaceholder]",ToBoxes[{\[SelectionPlaceholder]}],"\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`AngleAngleChainBox["\[SelectionPlaceholder]",ToBoxes[{\[SelectionPlaceholder]}],"\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`SquareSquareChainBox["\[SelectionPlaceholder]",ToBoxes[{\[SelectionPlaceholder]}],"\[SelectionPlaceholder]"]},4],{{PasteButton[RawBoxes[SpinorBuildingBlocks`Private`SpinorAngleBracketBox["\[SelectionPlaceholder]", "\[Placeholder]"]]],SpanFromLeft,PasteButton[RawBoxes[SpinorBuildingBlocks`Private`SpinorSquareBracketBox["\[SelectionPlaceholder]", "\[Placeholder]"]]],SpanFromLeft}}],Spacings->{2,0.6}]},Dynamic[opener1,(opener1=#;opener2=opener2)&]],OpenerView[{"Vector quantities",Grid[Join[Partition[PasteButton[RawBoxes[#]]&/@{SpinorBuildingBlocks`Private`MomBoxup["\[SelectionPlaceholder]","\[SelectionPlaceholder]"],
+SpinorBuildingBlocks`Private`MomBoxdown["\[SelectionPlaceholder]","\[SelectionPlaceholder]"],
+SpinorBuildingBlocks`Private`PauliSHupBox["\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`PauliSHdownBox["\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`PolarBoxup["\[SelectionPlaceholder]","\[SelectionPlaceholder]","\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`PolarBoxdown["\[SelectionPlaceholder]","\[SelectionPlaceholder]","\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`PolarBareBox["\[SelectionPlaceholder]","\[SelectionPlaceholder]"],SpinorBuildingBlocks`Private`DeltaVecBox["\[SelectionPlaceholder]","\[SelectionPlaceholder]"]
+},4],{{PasteButton[RawBoxes[SpinorBuildingBlocks`Private`EtaBoxup["\[SelectionPlaceholder]","\[SelectionPlaceholder]"]]],SpanFromLeft,PasteButton[RawBoxes[SpinorBuildingBlocks`Private`EtaBoxdown["\[SelectionPlaceholder]","\[SelectionPlaceholder]"]]],SpanFromLeft}}],Spacings->{2,0.6}]},Dynamic[opener2,(opener2=#;opener1=opener1)&]]}]],WindowTitle->"SpinorHelicity4DInput",Saveable->False];
 ];
 
 
@@ -1316,7 +1355,7 @@ Print["===============SpinorHelicity4D=============="];
 Print["Author: Manuel Accettulli Huber (QMUL)"];
 Print["Please report any bug to:"];
 Print["m.accettullihuber@qmul.ac.uk"];
-Print["Version 1.0 , last update 15/01/2023"];
+Print["Version 1.0 , last update 26/02/2023"];
 Print[Hyperlink["Click here for full documentation","https://github.com/accettullihuber"]];
 Print["============================================="];
 
