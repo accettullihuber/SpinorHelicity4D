@@ -1355,7 +1355,7 @@ Print["===============SpinorHelicity4D=============="];
 Print["Author: Manuel Accettulli Huber (QMUL)"];
 Print["Please report any bug to:"];
 Print["m.accettullihuber@qmul.ac.uk"];
-Print["Version 1.0 , last update 26/02/2023"];
+Print["Version 1.0 , last update 11/03/2023"];
 Print[Hyperlink["Click here for full documentation","https://github.com/accettullihuber"]];
 Print["============================================="];
 
