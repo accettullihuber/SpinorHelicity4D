@@ -578,7 +578,7 @@ Chain[$angle,x_,{y___,x_,z___},k_,type2_]/;OddQ[Length[{y}]]:=Chain[$angle,x,{y}
 
 (*Converting emty chains into brackets*)
 Chain[$angle,x_,{},y_,$angle]:=SpinorAngleBracket[x,y];
-Chain[$square,x_,{},y_,$square]:=SpinorAngleBracket[x,y];
+Chain[$square,x_,{},y_,$square]:=SpinorSquareBracket[x,y];
 
 locexp=locexp;
 ];
